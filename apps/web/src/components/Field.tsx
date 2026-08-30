@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
 const CONTROL =
@@ -66,6 +66,76 @@ export function TextareaField({
         {...rest}
       />
       <FieldMessages hint={hint} hintId={hintId} error={error} errorId={errorId} />
+    </div>
+  );
+}
+
+export function SelectField({
+  label,
+  error,
+  hint,
+  className,
+  options,
+  ...rest
+}: BaseProps &
+  SelectHTMLAttributes<HTMLSelectElement> & {
+    options: Array<{ value: string; label: string }>;
+  }) {
+  const { id, hintId, errorId, describedBy } = useFieldIds(hint, error);
+
+  return (
+    <div className="space-y-1.5">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <select
+        id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        className={cn(CONTROL, error ? 'border-danger' : 'border-border', className)}
+        {...rest}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <FieldMessages hint={hint} hintId={hintId} error={error} errorId={errorId} />
+    </div>
+  );
+}
+
+/**
+ * Checkbox, with the label beside the control rather than above it — the one
+ * case where the stacked layout of the other fields reads wrong.
+ */
+export function CheckboxField({
+  label,
+  hint,
+  className,
+  ...rest
+}: Omit<BaseProps, 'error'> & InputHTMLAttributes<HTMLInputElement>) {
+  const id = useId();
+  const hintId = `${id}-hint`;
+
+  return (
+    <div className="flex items-start gap-2.5">
+      <input
+        id={id}
+        type="checkbox"
+        aria-describedby={hint ? hintId : undefined}
+        className={cn('mt-0.5 h-4 w-4 rounded border-border accent-[var(--accent)]', className)}
+        {...rest}
+      />
+      <div>
+        <label htmlFor={id} className="text-sm font-medium text-text">
+          {label}
+        </label>
+        {hint && (
+          <p id={hintId} className="text-xs text-subtle">
+            {hint}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

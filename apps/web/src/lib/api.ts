@@ -65,6 +65,8 @@ export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
+  /** Bearer token for admin routes. Public reads never carry one. */
+  token?: string | null;
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -81,7 +83,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   try {
     response = await fetch(url, {
       method: options.method ?? 'GET',
-      headers: options.body ? { 'Content-Type': 'application/json' } : {},
+      headers: {
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+      },
       ...(options.body ? { body: JSON.stringify(options.body) } : {}),
       ...(options.signal ? { signal: options.signal } : {}),
     });
