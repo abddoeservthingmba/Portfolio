@@ -282,6 +282,20 @@ Three placeholders in `netlify.toml` must be replaced with the real hostnames �
 
 3. Deploy. `startCommand` runs `prisma migrate deploy` before the server accepts traffic, so the schema is never behind the code that expects it. `migrate deploy` applies committed migrations only — it never generates one and never prompts.
 
+### If you created the service manually
+
+A service made with **New → Web Service** ignores `render.yaml` and
+auto-detects its commands — which means `yarn start`, and yarn refuses to run
+at all while `packageManager` names pnpm. Set both commands by hand:
+
+| Field | Value |
+| --- | --- |
+| Build Command | `pnpm install --frozen-lockfile && pnpm --filter @portfolio-cms/api build` |
+| Start Command | `cd apps/api && npx --no-install prisma migrate deploy && node dist/index.js` |
+
+The start command deliberately depends on nothing but npm and node. pnpm may
+not be on PATH at runtime, and yarn cannot run here at all.
+
 ### 2. Site on Netlify
 
 1. **Add new site → Import an existing project**, point it at this repository. Netlify reads `netlify.toml`.

@@ -30,18 +30,20 @@ services:
     # Migrations run before the server accepts traffic, so the schema is never
     # behind the code that expects it. `migrate deploy` applies committed
     # migrations only — it never generates one, and never prompts.
+    # Depends on npm and node only. pnpm may not be on PATH at runtime, and
+    # yarn refuses to run at all while packageManager names pnpm.
     startCommand: >-
-      pnpm --filter @portfolio-cms/api exec prisma migrate deploy &&
-      pnpm --filter @portfolio-cms/api start
+      cd apps/api &&
+      npx --no-install prisma migrate deploy &&
+      node dist/index.js
 
     healthCheckPath: /api/v1/health
 
+    # Node version comes from .node-version, which applies to manually created
+    # services too.
     envVars:
       # Pinned. The build and runtime both assume Node 20+, and leaving this to
       # the platform default means a silent change breaks a deploy one day.
-      - key: NODE_VERSION
-        value: 22.11.0
-
       - key: NODE_ENV
         value: production
 
