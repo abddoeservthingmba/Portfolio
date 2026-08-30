@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "db:check": "tsx prisma/check-connection.ts",
     "db:generate": "cross-env NODE_OPTIONS=--use-system-ca prisma generate",
     "db:migrate": "cross-env NODE_OPTIONS=--use-system-ca prisma migrate dev",
     "db:deploy": "cross-env NODE_OPTIONS=--use-system-ca prisma migrate deploy",
