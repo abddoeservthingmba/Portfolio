@@ -20,12 +20,11 @@ services:
     # the registry to resolve the packageManager field, and its failures are
     # opaque; npm is already present and needs no such round trip.
     #
-    # The Prisma client is generated during build rather than committed, so it
-    # always matches the schema in the deployed commit.
+    # The api build script runs prisma generate itself, so the client always
+    # matches the schema in the deployed commit and no build path can skip it.
     buildCommand: >-
       npm install -g pnpm@10.34.5 &&
       pnpm install --frozen-lockfile &&
-      pnpm --filter @portfolio-cms/api exec prisma generate &&
       pnpm --filter @portfolio-cms/api build
 
     # Migrations run before the server accepts traffic, so the schema is never

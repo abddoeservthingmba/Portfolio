@@ -246,6 +246,21 @@ Netlify (static bundle)  ──JSON, CORS allow-list──>  Render (Express)  �
 
 Configuration lives in `netlify.toml` and `render.yaml`. Neither contains a secret: every credential is marked `sync: false`, so the host prompts for it once and stores it.
 
+### A note for this development machine
+
+The network here intercepts TLS, so `prisma generate` cannot fetch its engine
+checksums with plain Node. Every `db:*` script already carries
+`--use-system-ca`, which trusts the Windows certificate store rather than
+disabling verification — but `pnpm build` now runs `prisma generate` too, so
+set it once per shell:
+
+```bash
+export NODE_OPTIONS=--use-system-ca   # Git Bash
+$env:NODE_OPTIONS="--use-system-ca"   # PowerShell
+```
+
+CI and Render have no such proxy and need nothing.
+
 ### Before the first deploy
 
 Three placeholders in `netlify.toml` must be replaced with the real hostnames — search for `YOUR-API` and `YOUR-PROJECT`. They appear in the sitemap rewrites and in the Content-Security-Policy, and a wrong value there silently blocks every API call the browser makes.
