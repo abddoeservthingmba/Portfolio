@@ -3,8 +3,8 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes 
 import { cn } from '@/lib/cn';
 
 const CONTROL =
-  'w-full rounded-control border bg-surface px-3 py-2 text-sm text-text ' +
-  'placeholder:text-subtle transition-colors';
+  'w-full rounded-control border-2 bg-surface px-3.5 py-2.5 text-sm text-text ' +
+  'placeholder:text-subtle transition-colors duration-300';
 
 interface BaseProps {
   label: string;

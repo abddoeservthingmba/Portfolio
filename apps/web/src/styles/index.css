@@ -3,96 +3,122 @@
 /*
  * Design tokens (D12: tokens before components).
  *
- * Dark-first. The palette is near-black with a single electric accent and a
- * lot of depth — light mode is a first-class translation of the same roles,
- * not an afterthought.
+ * Warm and vivid: coral-orange as the primary accent, butter yellow as the
+ * secondary, on cream rather than cool grey. The whole palette sits in warm
+ * hues so nothing reads as clinical.
  *
  * Every animated property below is transform, opacity or filter. Those run on
- * the compositor, so motion stays at 60fps without touching layout. Nothing
- * here animates width, height, top or left.
+ * the compositor, so motion stays smooth without touching layout. Nothing here
+ * animates width, height, top or left.
  */
 
 :root {
   color-scheme: light;
 
-  --bg: oklch(97.5% 0.004 265);
-  --bg-elevated: oklch(99.5% 0.002 265);
-  --surface: oklch(100% 0 0);
-  --surface-raised: oklch(97% 0.005 265);
-  --surface-sunken: oklch(94.5% 0.006 265);
-  --border: oklch(90% 0.008 265);
-  --border-strong: oklch(80% 0.012 265);
+  /* Cream, not white — the warmth is what makes the accents sing. */
+  --bg: oklch(97.5% 0.018 85);
+  --bg-elevated: oklch(99% 0.012 85);
+  --surface: oklch(100% 0.006 85);
+  --surface-raised: oklch(96% 0.025 88);
+  --surface-sunken: oklch(94% 0.03 88);
+  --border: oklch(88% 0.03 80);
+  --border-strong: oklch(22% 0.03 60);
+  /* The offset shadow. Separate from the outline because dark mode needs an
+     outline lighter than the page but a shadow that is still a shadow. */
+  --ink: oklch(22% 0.03 60);
 
-  --text: oklch(18% 0.02 265);
-  --text-muted: oklch(46% 0.017 265);
-  --text-subtle: oklch(60% 0.014 265);
+  --text: oklch(22% 0.03 60);
+  --text-muted: oklch(45% 0.03 60);
+  --text-subtle: oklch(60% 0.03 65);
 
-  --accent: oklch(58% 0.16 162);
-  --accent-hover: oklch(52% 0.17 162);
-  --accent-fg: oklch(100% 0 0);
-  --accent-subtle: oklch(94% 0.05 162);
-  --accent-glow: oklch(58% 0.16 162 / 0.28);
+  /* Coral-orange. The eye-catcher. */
+  --accent: oklch(66% 0.2 42);
+  --accent-hover: oklch(60% 0.21 42);
+  --accent-fg: oklch(99% 0.01 85);
+  --accent-subtle: oklch(93% 0.06 55);
+  --accent-glow: oklch(66% 0.2 42 / 0.35);
 
-  --accent-2: oklch(60% 0.19 285);
-  --accent-3: oklch(72% 0.17 75);
+  /* Butter yellow, taken from the reference. */
+  --accent-2: oklch(93% 0.13 103);
+  --accent-2-fg: oklch(22% 0.03 60);
+  --accent-3: oklch(62% 0.16 200);
 
-  --danger: oklch(53% 0.2 27);
-  --danger-subtle: oklch(96% 0.03 27);
-  --success: oklch(55% 0.15 158);
-  --success-subtle: oklch(95% 0.05 158);
+  --danger: oklch(55% 0.21 27);
+  --danger-subtle: oklch(95% 0.05 30);
+  --success: oklch(60% 0.16 150);
+  --success-subtle: oklch(94% 0.06 150);
 
-  --ring: oklch(58% 0.16 162);
+  --ring: oklch(66% 0.2 42);
 
-  /* Depth. Dark mode swaps these for glows rather than drop shadows. */
-  --shadow-sm: 0 1px 2px oklch(20% 0.02 265 / 0.05);
-  --shadow-md: 0 4px 16px oklch(20% 0.02 265 / 0.08), 0 1px 3px oklch(20% 0.02 265 / 0.05);
-  --shadow-lg: 0 16px 48px oklch(20% 0.02 265 / 0.12), 0 4px 12px oklch(20% 0.02 265 / 0.06);
-  --shadow-glow: 0 0 0 transparent;
+  /*
+   * The footer is a full-width colour block in light mode. In dark mode a
+   * screen-wide butter-yellow slab defeats the point of dark mode, so it
+   * becomes a deep surface and the yellow moves to the accents.
+   */
+  --footer-bg: oklch(93% 0.13 103);
+  --footer-fg: oklch(22% 0.03 60);
+  --footer-muted: oklch(38% 0.04 70);
 
-  --grain-opacity: 0.028;
+  /*
+   * Hard offset shadows rather than soft blurs. A crisp displaced edge is what
+   * gives the surfaces their tactile, printed quality.
+   */
+  --shadow-sm: 2px 2px 0 var(--ink);
+  --shadow-md: 4px 4px 0 var(--ink);
+  --shadow-lg: 7px 7px 0 var(--ink);
+  --shadow-soft: 0 18px 40px oklch(30% 0.05 60 / 0.1);
+
+  --grain-opacity: 0.035;
 }
 
 /*
  * The dark palette is written twice on purpose: once for the system setting
- * and once for an explicit choice. CSS has no way to share a declaration block
- * between two selectors that must not be merged, and duplicating twenty
- * variables is cheaper than the indirection a preprocessor would add.
+ * and once for an explicit choice. CSS cannot share a declaration block between
+ * two selectors that must not be merged, and duplicating the variables is
+ * cheaper than the indirection a preprocessor would add.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --bg: oklch(14% 0.008 265);
-    --bg-elevated: oklch(16.5% 0.009 265);
-    --surface: oklch(18% 0.011 265);
-    --surface-raised: oklch(22% 0.013 265);
-    --surface-sunken: oklch(11.5% 0.007 265);
-    --border: oklch(27% 0.014 265);
-    --border-strong: oklch(38% 0.018 265);
+    --bg: oklch(16% 0.02 50);
+    --bg-elevated: oklch(19% 0.022 50);
+    --surface: oklch(21% 0.025 50);
+    --surface-raised: oklch(25% 0.03 50);
+    --surface-sunken: oklch(13% 0.018 50);
+    --border: oklch(32% 0.035 55);
+    --border-strong: oklch(52% 0.05 60);
+    --ink: oklch(6% 0.01 50);
 
-    --text: oklch(97% 0.004 265);
-    --text-muted: oklch(72% 0.014 265);
-    --text-subtle: oklch(56% 0.016 265);
+    --text: oklch(96% 0.015 85);
+    --text-muted: oklch(74% 0.025 70);
+    --text-subtle: oklch(58% 0.03 65);
 
-    --accent: oklch(84% 0.19 162);
-    --accent-hover: oklch(90% 0.19 162);
-    --accent-fg: oklch(14% 0.02 162);
-    --accent-subtle: oklch(26% 0.07 162);
-    --accent-glow: oklch(84% 0.19 162 / 0.35);
+    --accent: oklch(75% 0.19 45);
+    --accent-hover: oklch(82% 0.18 48);
+    --accent-fg: oklch(16% 0.03 50);
+    --accent-subtle: oklch(30% 0.08 45);
+    --accent-glow: oklch(75% 0.19 45 / 0.45);
 
-    --accent-2: oklch(72% 0.19 285);
-    --accent-3: oklch(82% 0.17 75);
+    --accent-2: oklch(90% 0.15 103);
+    --accent-2-fg: oklch(16% 0.03 50);
+    --accent-3: oklch(72% 0.15 200);
 
-    --danger: oklch(72% 0.17 27);
-    --danger-subtle: oklch(25% 0.07 27);
-    --success: oklch(82% 0.18 158);
-    --success-subtle: oklch(24% 0.07 158);
+    --danger: oklch(70% 0.19 27);
+    --danger-subtle: oklch(27% 0.08 27);
+    --success: oklch(78% 0.17 150);
+    --success-subtle: oklch(26% 0.07 150);
 
-    --ring: oklch(84% 0.19 162);
+    --ring: oklch(75% 0.19 45);
 
-    --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
-    --shadow-md: 0 4px 20px oklch(0% 0 0 / 0.5);
-    --shadow-lg: 0 24px 64px oklch(0% 0 0 / 0.6), 0 8px 20px oklch(0% 0 0 / 0.4);
+    --footer-bg: oklch(12% 0.018 50);
+    --footer-fg: oklch(90% 0.15 103);
+    --footer-muted: oklch(70% 0.03 70);
+
+    --shadow-sm: 2px 2px 0 var(--ink);
+    --shadow-md: 4px 4px 0 var(--ink);
+    --shadow-lg: 7px 7px 0 var(--ink);
+    --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.5);
 
     --grain-opacity: 0.05;
   }
@@ -101,45 +127,48 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: oklch(14% 0.008 265);
-  --bg-elevated: oklch(16.5% 0.009 265);
-  --surface: oklch(18% 0.011 265);
-  --surface-raised: oklch(22% 0.013 265);
-  --surface-sunken: oklch(11.5% 0.007 265);
-  --border: oklch(27% 0.014 265);
-  --border-strong: oklch(38% 0.018 265);
+  --bg: oklch(16% 0.02 50);
+  --bg-elevated: oklch(19% 0.022 50);
+  --surface: oklch(21% 0.025 50);
+  --surface-raised: oklch(25% 0.03 50);
+  --surface-sunken: oklch(13% 0.018 50);
+  --border: oklch(32% 0.035 55);
+  --border-strong: oklch(52% 0.05 60);
+  --ink: oklch(6% 0.01 50);
 
-  --text: oklch(97% 0.004 265);
-  --text-muted: oklch(72% 0.014 265);
-  --text-subtle: oklch(56% 0.016 265);
+  --text: oklch(96% 0.015 85);
+  --text-muted: oklch(74% 0.025 70);
+  --text-subtle: oklch(58% 0.03 65);
 
-  --accent: oklch(84% 0.19 162);
-  --accent-hover: oklch(90% 0.19 162);
-  --accent-fg: oklch(14% 0.02 162);
-  --accent-subtle: oklch(26% 0.07 162);
-  --accent-glow: oklch(84% 0.19 162 / 0.35);
+  --accent: oklch(75% 0.19 45);
+  --accent-hover: oklch(82% 0.18 48);
+  --accent-fg: oklch(16% 0.03 50);
+  --accent-subtle: oklch(30% 0.08 45);
+  --accent-glow: oklch(75% 0.19 45 / 0.45);
 
-  --accent-2: oklch(72% 0.19 285);
-  --accent-3: oklch(82% 0.17 75);
+  --accent-2: oklch(90% 0.15 103);
+  --accent-2-fg: oklch(16% 0.03 50);
+  --accent-3: oklch(72% 0.15 200);
 
-  --danger: oklch(72% 0.17 27);
-  --danger-subtle: oklch(25% 0.07 27);
-  --success: oklch(82% 0.18 158);
-  --success-subtle: oklch(24% 0.07 158);
+  --danger: oklch(70% 0.19 27);
+  --danger-subtle: oklch(27% 0.08 27);
+  --success: oklch(78% 0.17 150);
+  --success-subtle: oklch(26% 0.07 150);
 
-  --ring: oklch(84% 0.19 162);
+  --ring: oklch(75% 0.19 45);
 
-  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
-  --shadow-md: 0 4px 20px oklch(0% 0 0 / 0.5);
-  --shadow-lg: 0 24px 64px oklch(0% 0 0 / 0.6), 0 8px 20px oklch(0% 0 0 / 0.4);
+  --footer-bg: oklch(12% 0.018 50);
+  --footer-fg: oklch(90% 0.15 103);
+  --footer-muted: oklch(70% 0.03 70);
+
+  --shadow-sm: 2px 2px 0 var(--ink);
+  --shadow-md: 4px 4px 0 var(--ink);
+  --shadow-lg: 7px 7px 0 var(--ink);
+  --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.5);
 
   --grain-opacity: 0.05;
 }
 
-/*
- * Registers the semantic roles as Tailwind utilities. `inline` keeps them
- * pointing at the live variable, so a theme switch needs no class changes.
- */
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-elevated: var(--bg-elevated);
@@ -158,6 +187,7 @@
   --color-accent-fg: var(--accent-fg);
   --color-accent-subtle: var(--accent-subtle);
   --color-accent-2: var(--accent-2);
+  --color-accent-2-fg: var(--accent-2-fg);
   --color-accent-3: var(--accent-3);
 
   --color-danger: var(--danger);
@@ -167,8 +197,13 @@
 
   --color-ring: var(--ring);
 
-  --radius-card: 1rem;
-  --radius-control: 0.625rem;
+  --color-footer-bg: var(--footer-bg);
+  --color-footer-fg: var(--footer-fg);
+  --color-footer-muted: var(--footer-muted);
+
+  /* Chunky. Small radii read as corporate; these read as friendly. */
+  --radius-card: 1.5rem;
+  --radius-control: 0.875rem;
   --radius-pill: 999px;
 
   --shadow-card: var(--shadow-md);
@@ -179,9 +214,9 @@
     'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, monospace;
 
-  /* Motion. Expo-out for entrances, spring for anything that should feel physical. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Deliberately overshoots. The bounce is the personality. */
+  --ease-spring: cubic-bezier(0.34, 1.8, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -198,14 +233,15 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Stops the sticky header shifting when a short page has no scrollbar. */
     scrollbar-gutter: stable;
+    /* clip, not hidden: hidden would make body a scroll container and break
+       position:sticky on the header. */
+    overflow-x: clip;
   }
 
   /*
-   * A fine grain over the whole page. This is what stops large flat areas
-   * looking like plastic — it is one repeating SVG, inlined, so it costs no
-   * request and never repaints.
+   * A fine grain over the page. One inlined SVG, so it costs no request and
+   * never repaints — it stops large flat areas reading as plastic.
    */
   body::before {
     content: '';
@@ -220,8 +256,7 @@
   h1,
   h2,
   h3 {
-    /* Tight tracking is most of what makes large type read as designed. */
-    letter-spacing: -0.022em;
+    letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
@@ -230,17 +265,16 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--ring);
+    outline: 3px solid var(--ring);
     outline-offset: 3px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   ::selection {
-    background: var(--accent);
-    color: var(--accent-fg);
+    background: var(--accent-2);
+    color: var(--accent-2-fg);
   }
 
-  /* Native controls follow the theme rather than defaulting to light. */
   input,
   textarea,
   select,
@@ -254,21 +288,17 @@
   /* --- Entrance motion ------------------------------------------------- */
 
   /*
-   * Elements start hidden and are revealed by an IntersectionObserver adding
-   * [data-revealed]. `--i` staggers siblings without a timer per element.
-   */
-  /*
-   * Scoped to .js, which main.tsx sets. Without it the initial state would
-   * be opacity:0 for everyone — and a JavaScript failure would leave a
-   * permanently blank page rather than an unanimated one.
+   * Scoped to .js, which index.html sets before paint. Without that scope the
+   * initial state would be opacity:0 for everyone, and a JavaScript failure
+   * would leave a permanently blank page rather than an unanimated one.
    */
   .js .reveal {
     opacity: 0;
-    transform: translate3d(0, 18px, 0);
+    transform: translate3d(0, 22px, 0);
     transition:
-      opacity 0.7s var(--ease-out-expo),
-      transform 0.7s var(--ease-out-expo);
-    transition-delay: calc(var(--i, 0) * 60ms);
+      opacity 0.6s var(--ease-out-expo),
+      transform 0.7s var(--ease-spring);
+    transition-delay: calc(var(--i, 0) * 70ms);
     will-change: transform, opacity;
   }
 
@@ -280,11 +310,11 @@
 
   .js .reveal-scale {
     opacity: 0;
-    transform: scale(0.96) translate3d(0, 12px, 0);
+    transform: scale(0.9) translate3d(0, 16px, 0);
     transition:
-      opacity 0.6s var(--ease-out-expo),
-      transform 0.6s var(--ease-spring);
-    transition-delay: calc(var(--i, 0) * 60ms);
+      opacity 0.5s var(--ease-out-expo),
+      transform 0.7s var(--ease-spring);
+    transition-delay: calc(var(--i, 0) * 70ms);
   }
 
   .js .reveal-scale[data-revealed] {
@@ -292,64 +322,70 @@
     transform: none;
   }
 
+  /*
+   * Word-by-word heading reveal. Each word starts fully below its mask so it
+   * rises into view rather than fading in place.
+   */
+  .js .split-word {
+    transform: translate3d(0, 110%, 0);
+    transition: transform 0.85s var(--ease-out-expo);
+    transition-delay: calc(var(--i, 0) * 55ms);
+  }
+
+  .js .split-reveal[data-revealed] .split-word {
+    transform: none;
+  }
+
   /* --- Surfaces --------------------------------------------------------- */
 
-  /* A hairline highlight along the top edge — reads as light catching glass. */
-  .edge-light {
-    position: relative;
+  /* The hard-edged border-and-offset treatment used across cards and controls. */
+  .block-edge {
+    border: 2px solid var(--border-strong);
+    box-shadow: var(--shadow-md);
   }
 
-  .edge-light::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(
-      160deg,
-      oklch(100% 0 0 / 0.14),
-      transparent 40%,
-      transparent 60%,
-      oklch(100% 0 0 / 0.04)
-    );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+  /*
+   * Breaks an element out of its container to touch both viewport edges.
+   * Uses 100% of the container plus the gutters either side, rather than
+   * 100vw, so a visible scrollbar cannot cause horizontal overflow.
+   */
+  .full-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
   }
 
-  /* Ambient colour wash behind the hero. Purely decorative. */
   .aurora {
     position: absolute;
     inset: -30% -10% auto -10%;
     height: 60vh;
     z-index: -1;
     pointer-events: none;
-    filter: blur(80px);
-    opacity: 0.5;
+    filter: blur(90px);
+    opacity: 0.55;
     background:
-      radial-gradient(40% 60% at 20% 40%, var(--accent-glow), transparent 70%),
-      radial-gradient(35% 55% at 75% 30%, oklch(60% 0.19 285 / 0.22), transparent 70%);
-    animation: drift 18s var(--ease-smooth) infinite alternate;
+      radial-gradient(40% 60% at 18% 40%, var(--accent-glow), transparent 70%),
+      radial-gradient(38% 55% at 78% 28%, oklch(from var(--accent-2) l c h / 0.55), transparent 70%);
+    animation: drift 20s var(--ease-smooth) infinite alternate;
   }
 
   .text-gradient {
-    background: linear-gradient(120deg, var(--text) 30%, var(--accent) 75%, var(--accent-2));
-    background-size: 200% 100%;
+    background: linear-gradient(100deg, var(--accent) 10%, var(--accent-2) 60%, var(--accent) 95%);
+    background-size: 220% 100%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    animation: pan 8s var(--ease-smooth) infinite alternate;
+    animation: pan 7s var(--ease-smooth) infinite alternate;
+  }
+
+  /* Outlined display type, for the second line of a big heading. */
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 2px var(--text);
   }
 
   /* --- Interaction ------------------------------------------------------ */
 
-  /* A light sweep across a control on hover. */
   .sheen {
     position: relative;
     overflow: hidden;
@@ -360,12 +396,33 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, oklch(100% 0 0 / 0.18), transparent);
+    background: linear-gradient(90deg, transparent, oklch(100% 0 0 / 0.35), transparent);
     transition: transform 0.7s var(--ease-out-expo);
   }
 
   .sheen:hover::after {
     transform: translateX(100%);
+  }
+
+  /*
+   * The offset shadow collapses as the element moves into it, so a press feels
+   * like physically pushing a button down onto the page.
+   */
+  .push {
+    transition:
+      transform 0.25s var(--ease-spring),
+      box-shadow 0.25s var(--ease-out-expo),
+      background-color 0.25s var(--ease-smooth);
+  }
+
+  .push:hover {
+    transform: translate3d(-2px, -2px, 0);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .push:active {
+    transform: translate3d(4px, 4px, 0);
+    box-shadow: 0 0 0 var(--ink);
   }
 
   .lift {
@@ -376,19 +433,53 @@
   }
 
   .lift:hover {
-    transform: translate3d(0, -4px, 0);
+    transform: translate3d(-3px, -5px, 0);
     box-shadow: var(--shadow-lg);
   }
 
   .press {
-    transition: transform 0.12s var(--ease-smooth);
+    transition: transform 0.14s var(--ease-smooth);
   }
 
   .press:active {
-    transform: scale(0.97);
+    transform: scale(0.95);
   }
 
-  /* Skips rendering work for offscreen sections without affecting the layout. */
+  /* Squash-and-stretch: two axes moving differently reads as physical. */
+  .squish {
+    transition: transform 0.45s var(--ease-spring);
+  }
+
+  .squish:hover {
+    transform: scale3d(1.05, 0.95, 1);
+  }
+
+  .squish:active {
+    transform: scale3d(0.93, 1.04, 1);
+  }
+
+  /* A tilted label that straightens and grows when you reach for it. */
+  .sticker {
+    transform: rotate(var(--tilt, -3deg));
+    transition: transform 0.4s var(--ease-spring);
+  }
+
+  .sticker:hover {
+    transform: rotate(0deg) scale(1.08);
+  }
+
+  .link-draw {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 2px;
+    transition: background-size 0.45s var(--ease-out-expo);
+  }
+
+  .link-draw:hover {
+    background-size: 100% 2px;
+  }
+
   .defer-paint {
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
@@ -397,10 +488,10 @@
 
 @keyframes drift {
   from {
-    transform: translate3d(-4%, 0, 0) scale(1);
+    transform: translate3d(-5%, 0, 0) scale(1);
   }
   to {
-    transform: translate3d(4%, 3%, 0) scale(1.12);
+    transform: translate3d(5%, 4%, 0) scale(1.15);
   }
 }
 
@@ -431,6 +522,51 @@
   }
 }
 
+@keyframes grow-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Slow rotation for the circular badge in the hero. */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Attention-seeking nudge, used sparingly on the primary call to action. */
+@keyframes wiggle {
+  0%,
+  88%,
+  100% {
+    transform: rotate(0deg);
+  }
+  91% {
+    transform: rotate(-2.5deg);
+  }
+  94% {
+    transform: rotate(2.5deg);
+  }
+  97% {
+    transform: rotate(-1.5deg);
+  }
+}
+
 /*
  * Honours the operating system's reduced-motion setting. Everything still
  * arrives at its final state — nothing is left invisible.
@@ -449,82 +585,12 @@
     transition-delay: 0ms !important;
   }
 
-  .reveal,
-  .reveal-scale {
+  .js .reveal,
+  .js .reveal-scale {
     opacity: 1 !important;
     transform: none !important;
   }
-}
 
-/* Drives ScrollProgress where scroll-linked animations are supported. */
-@keyframes grow-progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-/* Page transition on route change. Short, because a slow one feels laggy. */
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 8px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@layer utilities {
-  /*
-   * Word-by-word heading reveal. Each word is translated fully below its mask,
-   * so it rises into view rather than fading in place — the difference between
-   * an animation and a transition that happens to move.
-   */
-  .js .split-word {
-    transform: translate3d(0, 110%, 0);
-    transition: transform 0.9s var(--ease-out-expo);
-    transition-delay: calc(var(--i, 0) * 45ms);
-  }
-
-  .js .split-reveal[data-revealed] .split-word {
-    transform: none;
-  }
-
-  /*
-   * Squash-and-stretch on press. Two axes moving by different amounts is what
-   * reads as physical rather than as a scale.
-   */
-  .squish {
-    transition: transform 0.45s var(--ease-spring);
-  }
-
-  .squish:hover {
-    transform: scale3d(1.04, 0.96, 1);
-  }
-
-  .squish:active {
-    transform: scale3d(0.94, 1.03, 1);
-  }
-
-  /* Underline that draws in from the left rather than appearing. */
-  .link-draw {
-    background-image: linear-gradient(currentColor, currentColor);
-    background-repeat: no-repeat;
-    background-position: 0 100%;
-    background-size: 0% 1px;
-    transition: background-size 0.45s var(--ease-out-expo);
-  }
-
-  .link-draw:hover {
-    background-size: 100% 1px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
   .js .split-word {
     transform: none !important;
   }

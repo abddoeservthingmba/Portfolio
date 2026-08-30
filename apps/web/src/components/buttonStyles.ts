@@ -1,30 +1,26 @@
 import { cn } from '@/lib/cn';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'yellow';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  // The glow is what makes the primary action feel lit rather than painted.
   primary:
-    'bg-accent text-accent-fg shadow-[0_4px_20px_-4px_var(--accent-glow)] ' +
-    'hover:bg-accent-hover hover:shadow-[0_8px_28px_-4px_var(--accent-glow)] sheen',
-  secondary:
-    'bg-surface text-text border border-border hover:border-border-strong ' +
-    'hover:bg-surface-raised shadow-[var(--shadow-sm)]',
-  ghost: 'bg-transparent text-muted hover:bg-surface-raised hover:text-text',
+    'bg-accent text-accent-fg border-2 border-border-strong push sheen hover:bg-accent-hover',
+  secondary: 'bg-surface text-text border-2 border-border-strong push hover:bg-surface-raised',
+  yellow: 'bg-accent-2 text-accent-2-fg border-2 border-border-strong push sheen',
+  // The only variant without the block treatment — for actions that should
+  // recede rather than compete.
+  ghost: 'bg-transparent text-muted border-2 border-transparent press hover:text-text',
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3.5 text-sm rounded-control',
-  md: 'h-11 px-5 text-sm rounded-control',
-  lg: 'h-13 px-7 text-base rounded-pill',
+  sm: 'h-9 px-4 text-sm rounded-pill',
+  md: 'h-11 px-5 text-sm rounded-pill',
+  lg: 'h-14 px-8 text-base rounded-pill',
 };
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 font-medium tracking-tight ' +
-  'transition-[background-color,border-color,box-shadow,transform] duration-300 ' +
-  '[transition-timing-function:var(--ease-out-expo)] press ' +
-  'disabled:pointer-events-none disabled:opacity-45';
+  'inline-flex items-center justify-center gap-2 font-semibold tracking-tight disabled:pointer-events-none disabled:opacity-45';
 
 /**
  * The button surface as a class string, for the cases where the element must

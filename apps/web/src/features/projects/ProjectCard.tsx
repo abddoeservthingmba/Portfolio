@@ -11,7 +11,7 @@ export function ProjectCard({ project }: { project: Project }) {
 
   return (
     <TiltCard className="h-full">
-      <article className="edge-light group/card relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-[var(--shadow-md)] transition-[border-color,box-shadow] duration-500 hover:border-border-strong hover:shadow-[var(--shadow-lg)]">
+      <article className="group/card relative flex h-full flex-col overflow-hidden rounded-card border-2 border-border-strong bg-surface shadow-[var(--shadow-md)] transition-[box-shadow,transform] duration-500 hover:shadow-[var(--shadow-lg)]">
         <ProjectThumbnail project={project} />
 
         <div className="flex flex-1 flex-col p-5">
@@ -64,9 +64,34 @@ export function ProjectCard({ project }: { project: Project }) {
  * Reserves a fixed 16:9 box before the image loads, so a list of cards does not
  * shift under the reader as assets arrive (C3, D12).
  */
+/**
+ * Fallback tints, cycled per project.
+ *
+ * A row of cards all sharing one colour reads as a single block. Deriving the
+ * tint from the slug rather than the render index keeps a given project the
+ * same colour wherever it appears — filtering a list must not repaint it.
+ */
+const TINTS = [
+  'oklch(93% 0.13 103)', // butter
+  'oklch(90% 0.09 42)', // peach
+  'oklch(90% 0.08 200)', // sky
+  'oklch(91% 0.09 150)', // mint
+  'oklch(90% 0.08 320)', // lilac
+];
+
+function tintFor(slug: string): string {
+  let hash = 0;
+  for (const char of slug) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+
+  return TINTS[hash % TINTS.length]!;
+}
+
 function ProjectThumbnail({ project }: { project: Project }) {
   return (
-    <div className="relative aspect-video w-full overflow-hidden border-b border-border bg-surface-sunken">
+    <div
+      className="relative aspect-video w-full overflow-hidden border-b-2 border-border-strong"
+      style={{ backgroundColor: tintFor(project.slug) }}
+    >
       {project.imageUrl ? (
         <img
           src={project.imageUrl}
@@ -86,14 +111,7 @@ function ProjectThumbnail({ project }: { project: Project }) {
 function InitialMark({ title }: { title: string }) {
   return (
     <div className="relative flex h-full items-center justify-center" aria-hidden="true">
-      <div
-        className="absolute inset-0 opacity-70"
-        style={{
-          background:
-            'radial-gradient(60% 80% at 30% 20%, var(--accent-subtle), transparent 70%), radial-gradient(50% 70% at 80% 80%, oklch(from var(--accent-2) l c h / 0.14), transparent 70%)',
-        }}
-      />
-      <span className="relative text-5xl font-semibold tracking-tight text-subtle/70">
+      <span className="relative text-7xl font-extrabold tracking-tight text-border-strong/25">
         {title.charAt(0)}
       </span>
     </div>

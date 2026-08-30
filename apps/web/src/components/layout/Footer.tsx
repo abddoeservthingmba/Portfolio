@@ -7,7 +7,7 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="defer-paint relative mt-auto overflow-hidden border-t border-border bg-surface-sunken">
+    <footer className="defer-paint relative mt-auto overflow-hidden border-t-2 border-border-strong bg-footer-bg">
       {/* A soft wash so the footer reads as a different surface, not a cut-off. */}
       <div
         aria-hidden="true"
@@ -20,15 +20,17 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
       <Container className="relative">
         <div className="flex flex-col gap-10 py-14 sm:flex-row sm:justify-between">
           <div className="max-w-sm">
-            <p className="text-2xl font-semibold tracking-tight text-text">
+            <p className="text-3xl font-extrabold tracking-tight text-footer-fg">
               {settings?.siteTitle ?? 'Portfolio'}
             </p>
-            {settings?.tagline && <p className="mt-2 text-sm text-muted">{settings.tagline}</p>}
+            {settings?.tagline && (
+              <p className="mt-2 text-sm font-medium text-footer-muted">{settings.tagline}</p>
+            )}
 
             {settings?.emailPublic && (
               <a
                 href={`mailto:${settings.emailPublic}`}
-                className="group mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+                className="group mt-5 inline-flex items-center gap-1.5 text-base font-bold text-footer-fg link-draw"
               >
                 {settings.emailPublic}
                 <span
@@ -48,7 +50,7 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
                       href={link.url}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="press inline-flex rounded-pill border border-border bg-surface px-3.5 py-1.5 text-sm text-muted transition-colors duration-300 hover:border-border-strong hover:text-text"
+                      className="push inline-flex rounded-pill border-2 border-border-strong bg-surface px-4 py-2 text-sm font-semibold text-text"
                     >
                       {link.label}
                     </a>
@@ -59,16 +61,13 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
           </div>
 
           <nav aria-label="Footer">
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-subtle">
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-footer-muted">
               Explore
             </p>
             <ul className="grid grid-cols-2 gap-x-10 gap-y-2.5">
               {NAV_ITEMS.map((item) => (
                 <li key={item.to}>
-                  <Link
-                    to={item.to}
-                    className="text-sm text-muted underline-offset-4 transition-colors duration-300 hover:text-text hover:underline"
-                  >
+                  <Link to={item.to} className="link-draw text-sm font-medium text-footer-fg">
                     {item.label}
                   </Link>
                 </li>
@@ -77,11 +76,13 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
           </nav>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border py-6">
-          <p className="text-xs text-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-border-strong/20 py-6">
+          <p className="text-xs font-medium text-footer-muted">
             © {year} {settings?.siteTitle ?? 'Portfolio'}
           </p>
-          <p className="text-xs text-subtle">React · TypeScript · Express · PostgreSQL</p>
+          <p className="text-xs font-medium text-footer-muted">
+            React · TypeScript · Express · PostgreSQL
+          </p>
         </div>
       </Container>
     </footer>

@@ -22,9 +22,9 @@ export function Hero({
     return (
       <section className="relative py-10">
         <div className="space-y-5">
-          <Skeleton className="h-7 w-40 rounded-pill" />
-          <Skeleton className="h-16 w-3/4" />
-          <Skeleton className="h-16 w-1/2" />
+          <Skeleton className="h-9 w-52 rounded-pill" />
+          <Skeleton className="h-20 w-3/4" />
+          <Skeleton className="h-20 w-1/2" />
           <Skeleton className="h-5 w-full max-w-prose" />
         </div>
       </section>
@@ -34,27 +34,39 @@ export function Hero({
   const [firstName, ...rest] = (settings?.siteTitle ?? 'Portfolio').split(' ');
 
   return (
-    <section className="relative isolate py-10 sm:py-16">
-      {/* Ambient colour behind the type. Decorative only. */}
+    <section className="relative isolate py-8 sm:py-14">
       <div className="aurora" aria-hidden="true" />
 
-      <Reveal index={0}>
-        <span className="inline-flex items-center gap-2 rounded-pill border border-border bg-surface/70 px-3.5 py-1.5 text-xs font-medium text-muted backdrop-blur">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+      <div className="flex flex-wrap items-center gap-3">
+        <Reveal index={0}>
+          <span className="sticker inline-flex items-center gap-2 rounded-pill border-2 border-border-strong bg-accent-2 px-4 py-2 text-sm font-semibold text-accent-2-fg shadow-[var(--shadow-sm)]">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+            </span>
+            Open to opportunities
           </span>
-          Available for opportunities
-        </span>
-      </Reveal>
+        </Reveal>
 
-      <h1 className="mt-7">
+        {settings?.location && (
+          <Reveal index={1}>
+            <span
+              className="sticker inline-flex rounded-pill border-2 border-border-strong bg-surface px-4 py-2 text-sm font-semibold text-text shadow-[var(--shadow-sm)]"
+              style={{ '--tilt': '2.5deg' } as React.CSSProperties}
+            >
+              {settings.location}
+            </span>
+          </Reveal>
+        )}
+      </div>
+
+      <h1 className="mt-8">
         <SplitReveal>
-          <span className="block text-[clamp(2.5rem,8vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-text">
+          <span className="block text-[clamp(2.75rem,9vw,6.5rem)] font-extrabold leading-[0.9] tracking-[-0.045em] text-text">
             <SplitText text={firstName ?? ''} />
           </span>
           {rest.length > 0 && (
-            <span className="text-gradient block text-[clamp(2.5rem,8vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
+            <span className="text-gradient block text-[clamp(2.75rem,9vw,6.5rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
               <SplitText text={rest.join(' ')} startIndex={1} />
             </span>
           )}
@@ -62,7 +74,11 @@ export function Hero({
       </h1>
 
       {settings?.tagline && (
-        <Reveal index={2} as="p" className="mt-6 max-w-2xl text-lg text-muted sm:text-xl">
+        <Reveal
+          index={2}
+          as="p"
+          className="mt-7 max-w-2xl text-lg font-medium text-text sm:text-xl"
+        >
           {settings.tagline}
         </Reveal>
       )}
@@ -73,21 +89,27 @@ export function Hero({
         </Reveal>
       )}
 
-      <Reveal index={4} className="mt-9 flex flex-wrap items-center gap-3">
+      <Reveal index={4} className="mt-10 flex flex-wrap items-center gap-4">
         <Magnetic>
-          <Link to="/projects" className={cn(buttonStyles('primary', 'lg'), 'squish group')}>
-            View work
+          <Link
+            to="/projects"
+            className={cn(buttonStyles('primary', 'lg'), 'group')}
+            // A slow, occasional nudge. Constant movement stops being a signal.
+            style={{ animation: 'wiggle 6s var(--ease-smooth) infinite' }}
+          >
+            See the work
             <span
               aria-hidden="true"
-              className="transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:translate-x-1"
+              className="transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:translate-x-1.5"
             >
               →
             </span>
           </Link>
         </Magnetic>
+
         <Magnetic>
-          <Link to="/contact" className={cn(buttonStyles('secondary', 'lg'), 'squish')}>
-            Get in touch
+          <Link to="/contact" className={buttonStyles('secondary', 'lg')}>
+            Say hello
           </Link>
         </Magnetic>
       </Reveal>

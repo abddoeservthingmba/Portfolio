@@ -31,7 +31,12 @@ export function HomePage() {
     <>
       <Hero settings={settings} isLoading={settings === null} />
 
-      <section className="defer-paint mt-8">
+      {/*
+        No defer-paint here: content-visibility implies paint containment,
+        which would clip the marquee's full-bleed band back to the container.
+        This section is above the fold and always painted regardless.
+      */}
+      <section className="mt-10">
         <SkillMarquee skills={skills.data ?? []} />
       </section>
 

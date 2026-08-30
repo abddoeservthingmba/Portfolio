@@ -13,9 +13,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
  * A surface with a border and depth. It does not know what it contains —
  * headings, media and actions are composed by the caller.
  *
- * `edge-light` draws a hairline gradient along the top edge, which is what
- * separates a card from its background in dark mode where a drop shadow does
- * almost nothing.
+ * A hard two-pixel border and an offset shadow rather than a soft blur — the
+ * displaced edge is what gives the surface its tactile, printed quality, and
+ * it survives dark mode where a drop shadow does almost nothing.
  */
 export function Card({
   children,
@@ -27,9 +27,9 @@ export function Card({
   return (
     <div
       className={cn(
-        'edge-light rounded-card border border-border bg-surface',
+        'rounded-card border-2 border-border-strong bg-surface',
         !flat && 'shadow-[var(--shadow-md)]',
-        interactive && 'lift hover:border-border-strong',
+        interactive && 'lift',
         className,
       )}
       {...rest}

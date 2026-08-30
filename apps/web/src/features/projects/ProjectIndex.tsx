@@ -29,7 +29,7 @@ export function ProjectIndex({ projects }: { projects: Project[] }) {
         setPoint({ x: event.clientX, y: event.clientY });
       }}
     >
-      <ol className="border-t border-border">
+      <ol className="border-t-2 border-border-strong">
         {projects.map((project, index) => (
           <li key={project.id}>
             <ProjectRow project={project} index={index} onEnter={() => setHovered(project)} />
@@ -54,9 +54,9 @@ function ProjectRow({
   return (
     <div
       onPointerEnter={onEnter}
-      className="group/row relative flex items-baseline gap-5 border-b border-border py-7 transition-colors duration-500 hover:border-border-strong sm:gap-8"
+      className="group/row relative flex items-baseline gap-5 border-b-2 border-border-strong py-8 transition-colors duration-500 sm:gap-8"
     >
-      <span className="w-8 shrink-0 font-mono text-xs text-subtle transition-colors duration-300 group-hover/row:text-accent">
+      <span className="w-9 shrink-0 font-mono text-sm font-bold text-subtle transition-colors duration-300 group-hover/row:text-accent">
         {String(index + 1).padStart(2, '0')}
       </span>
 
@@ -122,7 +122,7 @@ function HoverPreview({
       }}
     >
       {project && (
-        <div className="edge-light h-[13.5rem] w-80 overflow-hidden rounded-card border border-border bg-surface shadow-[var(--shadow-lg)]">
+        <div className="h-[13.5rem] w-80 overflow-hidden rounded-card border-2 border-border-strong bg-surface shadow-[var(--shadow-lg)]">
           {project.imageUrl ? (
             <img src={project.imageUrl} alt="" className="h-full w-full object-cover" />
           ) : (
