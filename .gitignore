@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# environment — never commit any of these (blueprint D5, checklist B.1)
+.env
+.env.*
+!.env.example
+
+# test + tooling caches
+coverage/
+.vite/
+.eslintcache
+
+# editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

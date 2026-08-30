@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" data-theme="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio</title>
+    <meta
+      name="description"
+      content="Portfolio — projects, experience, skills and certifications."
+    />
+    <script>
+      // Applies the stored theme before first paint so the page never flashes
+      // the wrong palette. Kept inline and tiny for that reason.
+      try {
+        var stored = localStorage.getItem('theme');
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', stored);
+        }
+      } catch (_) {
+        /* private mode or blocked storage — fall back to the system palette */
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

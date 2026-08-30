@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"],
+    // Node ESM: relative imports carry an explicit .js extension so the emitted
+    // output runs under `node dist/index.js` without a bundler.
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "outDir": "dist",
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": ["src", "tests", "vitest.config.ts"]
+}

@@ -1,0 +1,51 @@
+name: CI
+
+# The gate before merge (C7). Every job here blocks the merge — a check that
+# does not block is a check nobody reads.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # The script carries --max-warnings 0: warnings fail the build, here and
+      # locally, so they cannot accumulate until nobody reads them.
+      - name: Lint
+        run: pnpm lint
+
+      # Verified, not applied — a formatting change stays someone's deliberate commit (D8.2).
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# The admin portal is not public content and must never be indexed.
+Disallow: /admin
+
+Sitemap: https://example.com/sitemap.xml

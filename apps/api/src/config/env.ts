@@ -1,0 +1,62 @@
+import { z } from 'zod';
+
+/**
+ * Environment is parsed once, at startup, and the process refuses to boot on a
+ * bad value. A missing variable should be a loud failure here rather than an
+ * undefined that surfaces as a confusing 500 an hour later.
+ *
+ * Supabase variables are declared optional for now: Phase 2 runs on mock data
+ * and has no database. They become required in Phase 3.
+ */
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().int().positive().default(4000),
+
+  // Comma-separated CORS allow-list. No wildcard is accepted at any point (D5).
+  ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+
+  // Public write routes (the contact endpoint) — window in ms, ceiling per window.
+  RATE_LIMIT_WINDOW: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(15 * 60 * 1000),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
+
+  MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5 * 1024 * 1024),
+
+  DATABASE_URL: z.string().optional(),
+  DIRECT_URL: z.string().optional(),
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_JWT_SECRET: z.string().optional(),
+});
+
+function loadEnv() {
+  const parsed = envSchema.safeParse(process.env);
+
+  if (!parsed.success) {
+    // Print the offending variable NAMES only. Values may be secrets (D5).
+    const names = Object.keys(z.flattenError(parsed.error).fieldErrors).join(', ');
+    throw new Error(`Invalid environment configuration. Check these variables: ${names}`);
+  }
+
+  return parsed.data;
+}
+
+const raw = loadEnv();
+
+export const env = {
+  ...raw,
+  isProduction: raw.NODE_ENV === 'production',
+  isTest: raw.NODE_ENV === 'test',
+  allowedOrigins: raw.ALLOWED_ORIGINS.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+} as const;
+
+export type Env = typeof env;
