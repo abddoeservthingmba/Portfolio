@@ -1,0 +1,409 @@
+openapi: 3.1.0
+
+info:
+  title: Portfolio CMS API
+  version: '1.0'
+  description: |
+    The public read surface of the Portfolio CMS.
+
+    Every route below is a GET. There is no code path from an unauthenticated
+    request to a write — the contact endpoint and the admin mutation routes
+    arrive in later phases and are not described here yet.
+
+    Two conventions hold everywhere:
+
+    - **One response envelope.** Success carries `data` and `meta`; failure
+      carries `error` and `meta`. Clients never guess where the payload is.
+    - **A correlation id on every response.** `meta.requestId` matches the
+      `x-request-id` header and the server log line, so a reported failure can
+      be traced without exposing anything about the internals.
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local development
+  - url: https://api.example.com/api/v1
+    description: Production (set at Phase 7)
+
+tags:
+  - name: Operations
+  - name: Content
+
+paths:
+  /health:
+    get:
+      tags: [Operations]
+      summary: Service liveness and database reachability
+      description: |
+        Deliberately cheap — used by the deployment smoke check and to warm a
+        cold service. A database that does not answer yields `degraded` rather
+        than an error, because a monitor learns more from a specific report
+        than from a 500.
+      responses:
+        '200':
+          description: Health report
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Health' }
+
+  /projects:
+    get:
+      tags: [Content]
+      summary: List published projects
+      description: Published projects only. Featured first, then newest.
+      parameters:
+        - name: featured
+          in: query
+          description: Restrict to featured projects, for the home page.
+          schema: { type: string, enum: ['true', 'false', '1', '0', ''] }
+        - name: q
+          in: query
+          description: Case-insensitive match on title and short description.
+          schema: { type: string, minLength: 1, maxLength: 100 }
+        - name: skill
+          in: query
+          description: Skill id, filtered through the join table.
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Matching projects
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Project' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /projects/{slug}:
+    get:
+      tags: [Content]
+      summary: Get one published project by slug
+      description: |
+        Resolves by slug, not by identifier — slugs are unique and indexed,
+        and internal ids stay internal.
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+            maxLength: 200
+          example: portfolio-cms
+      responses:
+        '200':
+          description: The project
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Project' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /skills:
+    get:
+      tags: [Content]
+      summary: List skills
+      parameters:
+        - name: category
+          in: query
+          description: Return one category group rather than the full set.
+          schema: { type: string, minLength: 1, maxLength: 60 }
+      responses:
+        '200':
+          description: Skills, ordered by category then name
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Skill' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /experience:
+    get:
+      tags: [Content]
+      summary: List work experience
+      description: Ordered by display order, then start date descending.
+      responses:
+        '200':
+          description: Experience entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Experience' }
+
+  /certifications:
+    get:
+      tags: [Content]
+      summary: List certifications, most recently issued first
+      responses:
+        '200':
+          description: Certifications
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Certification' }
+
+  /education:
+    get:
+      tags: [Content]
+      summary: List education records, most recent first
+      responses:
+        '200':
+          description: Education records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Education' }
+
+  /resume:
+    get:
+      tags: [Content]
+      summary: Get the active resume version
+      description: |
+        `data` is null when no version is active. That is an ordinary state the
+        page renders an empty view for, not an error.
+      responses:
+        '200':
+          description: The active resume, or null
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        oneOf:
+                          - $ref: '#/components/schemas/Resume'
+                          - type: 'null'
+
+  /settings:
+    get:
+      tags: [Content]
+      summary: Get site settings
+      description: |
+        The singleton settings row. Falls back to usable defaults when unseeded
+        rather than 404ing — the header and footer read this on every page.
+      responses:
+        '200':
+          description: Site settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Settings' }
+
+components:
+  schemas:
+    Meta:
+      type: object
+      required: [requestId]
+      properties:
+        requestId:
+          type: string
+          description: Correlation id, matching the x-request-id header and the server log.
+
+    SuccessEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        meta: { $ref: '#/components/schemas/Meta' }
+
+    ErrorEnvelope:
+      type: object
+      required: [error, meta]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  BAD_REQUEST,
+                  UNAUTHENTICATED,
+                  FORBIDDEN,
+                  NOT_FOUND,
+                  CONFLICT,
+                  PAYLOAD_TOO_LARGE,
+                  UNSUPPORTED_MEDIA_TYPE,
+                  VALIDATION_FAILED,
+                  RATE_LIMITED,
+                  INTERNAL_ERROR,
+                ]
+            message:
+              type: string
+              description: Human-readable summary, safe to display to a visitor.
+            fields:
+              type: object
+              additionalProperties: { type: string }
+              description: Field name to reason. Present on 422.
+        meta: { $ref: '#/components/schemas/Meta' }
+
+    Health:
+      type: object
+      required: [status, uptimeSeconds, environment, database]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        uptimeSeconds: { type: integer }
+        environment: { type: string }
+        database: { type: string, enum: [ok, unreachable, not_configured] }
+
+    Skill:
+      type: object
+      required: [id, name, category, icon, proficiency]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { type: string }
+        icon: { type: [string, 'null'] }
+        proficiency:
+          type: [integer, 'null']
+          minimum: 1
+          maximum: 5
+          description: Optional. Null renders no meter rather than a zero.
+
+    Project:
+      type: object
+      required:
+        [
+          id,
+          title,
+          slug,
+          shortDescription,
+          description,
+          status,
+          repoUrl,
+          liveUrl,
+          imageUrl,
+          featured,
+          skills,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        slug: { type: string }
+        shortDescription: { type: string }
+        description: { type: string, description: Paragraphs separated by a blank line. }
+        status: { type: string, enum: [PUBLISHED] }
+        repoUrl: { type: [string, 'null'] }
+        liveUrl: { type: [string, 'null'] }
+        imageUrl:
+          type: [string, 'null']
+          description: Resolved from the stored path at response time. Never a database value.
+        featured: { type: boolean }
+        skills:
+          type: array
+          items: { $ref: '#/components/schemas/Skill' }
+
+    Experience:
+      type: object
+      required: [id, company, role, startDate, endDate, summary, displayOrder]
+      properties:
+        id: { type: string, format: uuid }
+        company: { type: string }
+        role: { type: string }
+        startDate: { type: string, format: date }
+        endDate:
+          type: [string, 'null']
+          format: date
+          description: Null denotes a current role.
+        summary: { type: string }
+        displayOrder: { type: integer }
+
+    Certification:
+      type: object
+      required: [id, title, issuer, issueDate, credentialUrl, credentialId, imageUrl]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        issuer: { type: string }
+        issueDate: { type: string, format: date }
+        credentialUrl: { type: [string, 'null'] }
+        credentialId: { type: [string, 'null'] }
+        imageUrl: { type: [string, 'null'] }
+
+    Education:
+      type: object
+      required: [id, institution, qualification, field, startDate, endDate, summary]
+      properties:
+        id: { type: string, format: uuid }
+        institution: { type: string }
+        qualification: { type: string }
+        field: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: [string, 'null'], format: date }
+        summary: { type: string }
+
+    Resume:
+      type: object
+      required: [id, title, fileUrl, isActive, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        fileUrl: { type: [string, 'null'] }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date }
+
+    Settings:
+      type: object
+      required: [siteTitle, tagline, bio, emailPublic, location, socialLinks]
+      properties:
+        siteTitle: { type: string }
+        tagline: { type: string }
+        bio: { type: string, description: Paragraphs separated by a blank line. }
+        emailPublic: { type: string }
+        location: { type: string }
+        socialLinks:
+          type: array
+          items:
+            type: object
+            required: [label, url]
+            properties:
+              label: { type: string }
+              url: { type: string }
+
+  responses:
+    NotFound:
+      description: No resource at that identifier or slug
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    ValidationFailed:
+      description: Schema validation failed; the response carries a field error map
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }

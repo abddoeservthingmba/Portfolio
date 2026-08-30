@@ -8,42 +8,16 @@ import type {
   SiteSettings,
   Skill,
 } from '@/types/content';
-import { mockProjects } from '@/mocks/projects';
-import { mockSkills } from '@/mocks/skills';
-import {
-  mockCertifications,
-  mockEducation,
-  mockExperience,
-  mockResume,
-  mockSettings,
-} from '@/mocks/profile';
+import { apiRequest, ApiError } from './api';
 
 /**
- * THE PHASE 2 / PHASE 3 SEAM.
+ * Every read the public site performs, one function per route in the D4
+ * contract. Pages call these and never touch the API client directly, so a
+ * change to the contract lands in exactly one file.
  *
- * Every function here mirrors a route in the D4 contract and returns what that
- * route's envelope will carry. Pages consume these, never the mock modules
- * directly — so Phase 3 replaces the bodies with typed fetch calls and deletes
- * `src/mocks/`, and no page or component changes.
- *
- * The functions are async and artificially latent on purpose: it makes the
- * loading and error states real work during Phase 2 rather than something
- * discovered when the API arrives.
+ * Phase 3 replaced the mock bodies here with real requests; `src/mocks/` is
+ * gone. The signatures did not change, so no page or component was touched.
  */
-
-/** Stands in for network time so skeletons are exercised in development. */
-const LATENCY_MS = 220;
-
-function resolve<T>(value: T): Promise<T> {
-  return new Promise((done) => {
-    setTimeout(() => done(structuredClone(value)), LATENCY_MS);
-  });
-}
-
-/** Public callers see published projects only (D4.2). */
-function published(projects: Project[]): Project[] {
-  return projects.filter((project) => project.status === 'PUBLISHED');
-}
 
 export interface ProjectQuery {
   featured?: boolean;
@@ -55,74 +29,75 @@ export interface ProjectQuery {
 
 /** GET /projects */
 export async function getProjects(query: ProjectQuery = {}): Promise<Project[]> {
-  let results = published(mockProjects);
-
-  if (query.featured) {
-    results = results.filter((project) => project.featured);
-  }
-
-  if (query.skill) {
-    results = results.filter((project) => project.skills.some((skill) => skill.id === query.skill));
-  }
-
-  if (query.q) {
-    const term = query.q.trim().toLowerCase();
-    results = results.filter(
-      (project) =>
-        project.title.toLowerCase().includes(term) ||
-        project.shortDescription.toLowerCase().includes(term),
-    );
-  }
-
-  return resolve(results);
+  return apiRequest<Project[]>('/projects', {
+    query: {
+      ...(query.featured ? { featured: 'true' } : {}),
+      ...(query.q ? { q: query.q } : {}),
+      ...(query.skill ? { skill: query.skill } : {}),
+    },
+  });
 }
 
-/** GET /projects/:slug — resolves by slug, never by internal id (C3). */
+/**
+ * GET /projects/:slug.
+ *
+ * A 404 is an ordinary outcome here, not a failure — the page renders a
+ * not-found view for it — so it resolves to null rather than throwing. Every
+ * other error propagates and becomes an error state.
+ */
 export async function getProjectBySlug(slug: string): Promise<Project | null> {
-  const match = published(mockProjects).find((project) => project.slug === slug);
-  return resolve(match ?? null);
+  try {
+    return await apiRequest<Project>(`/projects/${encodeURIComponent(slug)}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.code === 'NOT_FOUND') return null;
+    throw error;
+  }
 }
 
 /** GET /skills */
 export async function getSkills(): Promise<Skill[]> {
-  return resolve(mockSkills);
+  return apiRequest<Skill[]>('/skills');
 }
 
-/** GET /experience — newest first, with displayOrder overriding date sorting. */
+/** GET /experience */
 export async function getExperience(): Promise<Experience[]> {
-  const sorted = [...mockExperience].sort((a, b) => a.displayOrder - b.displayOrder);
-  return resolve(sorted);
+  return apiRequest<Experience[]>('/experience');
 }
 
-/** GET /certifications — reverse-chronological by issue date (D3.1). */
+/** GET /certifications */
 export async function getCertifications(): Promise<Certification[]> {
-  const sorted = [...mockCertifications].sort((a, b) => b.issueDate.localeCompare(a.issueDate));
-  return resolve(sorted);
+  return apiRequest<Certification[]>('/certifications');
 }
 
-/** GET /education — reverse-chronological (FR-07). */
+/** GET /education */
 export async function getEducation(): Promise<Education[]> {
-  const sorted = [...mockEducation].sort((a, b) => b.startDate.localeCompare(a.startDate));
-  return resolve(sorted);
+  return apiRequest<Education[]>('/education');
 }
 
-/** GET /resume — the active version (FR-08). */
+/** GET /resume — null when no version is active (FR-08). */
 export async function getResume(): Promise<ResumeVersion | null> {
-  return resolve(mockResume.isActive ? mockResume : null);
+  return apiRequest<ResumeVersion | null>('/resume');
 }
 
 /** GET /settings */
 export async function getSettings(): Promise<SiteSettings> {
-  return resolve(mockSettings);
+  return apiRequest<SiteSettings>('/settings');
 }
 
 /**
  * POST /contact.
  *
- * Phase 2 has nowhere to persist a message, so this acknowledges without
- * storing. The form around it is complete — validation, states, honeypot — so
- * Phase 5 changes this body alone.
+ * NOT YET IMPLEMENTED SERVER-SIDE. The contact endpoint, its abuse controls and
+ * the admin inbox are Phase 5 (FR-09, FR-26) — Phase 3 delivers the public read
+ * surface only.
+ *
+ * This throws rather than pretending to succeed. A form that silently discards
+ * a real message is worse than one that says it could not send.
  */
 export async function submitContact(_submission: ContactSubmission): Promise<void> {
-  await resolve(null);
+  throw new ApiError(
+    'INTERNAL_ERROR',
+    'Sending messages is not available yet. Please use the email address listed on this page.',
+    501,
+  );
 }

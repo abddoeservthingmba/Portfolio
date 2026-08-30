@@ -54,6 +54,15 @@ export default tseslint.config(
     },
   },
 
+  // Seed and migration scripts are CLIs — reporting progress to stdout is
+  // their job, not a stray debug statement.
+  {
+    files: ['apps/api/prisma/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // Tests may lean on console and non-null assertions.
   {
     files: ['**/tests/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],

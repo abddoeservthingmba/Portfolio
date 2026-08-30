@@ -1,4 +1,23 @@
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+
+/**
+ * Loads apps/api/.env into process.env when the file exists.
+ *
+ * Node's built-in loader, so there is no dotenv dependency. Values already in
+ * the environment win, which is what makes the hosted case work untouched:
+ * Render and CI inject real variables and ship no .env file at all.
+ */
+function loadEnvFile() {
+  const envPath = fileURLToPath(new URL('../../.env', import.meta.url));
+
+  if (existsSync(envPath)) {
+    process.loadEnvFile(envPath);
+  }
+}
+
+loadEnvFile();
 
 /**
  * Environment is parsed once, at startup, and the process refuses to boot on a

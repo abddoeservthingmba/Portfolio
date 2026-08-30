@@ -1,0 +1,205 @@
+// Portfolio CMS data model — D3 of the Program Blueprint.
+//
+// Conventions that hold across every model:
+//   - UUID primary keys. Identifiers appear in admin URLs and must not be
+//     enumerable (D3.2).
+//   - Column names mapped to snake_case so the database reads naturally to
+//     anyone inspecting it directly, while the TypeScript surface stays
+//     idiomatic.
+//   - Delete behaviour declared explicitly per relation, never left to a default.
+//   - Audit timestamps on all managed content; updatedAt is set by the database
+//     on every mutation, not by the client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Pooled connection for runtime queries.
+  url = env("DATABASE_URL")
+  // Direct connection: the pooler cannot run migrations.
+  directUrl = env("DIRECT_URL")
+}
+
+/// Application-side mirror of the identity provider's user. One row in V1.
+model User {
+  id         String   @id @default(uuid())
+  authUserId String   @unique @map("auth_user_id")
+  role       String   @default("admin")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+
+  @@map("project_status")
+}
+
+model Project {
+  id               String        @id @default(uuid())
+  title            String
+  /// Unique and indexed. Public detail routes resolve by slug, not by id (C3).
+  slug             String        @unique
+  shortDescription String?       @map("short_description")
+  description      String?
+  status           ProjectStatus @default(DRAFT)
+  repoUrl          String?       @map("repo_url")
+  liveUrl          String?       @map("live_url")
+  imagePath        String?       @map("image_path")
+  featured         Boolean       @default(false)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  skills ProjectSkill[]
+
+  // Both drive list queries, so both are indexed (D3.2).
+  @@index([featured])
+  @@index([status])
+  @@map("projects")
+}
+
+model Skill {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  /// Drives the grouped display on the public skills page.
+  category    String
+  icon        String?
+  /// Optional — a null renders no meter rather than a zero.
+  proficiency Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  projects ProjectSkill[]
+
+  @@index([category])
+  @@map("skills")
+}
+
+/// Explicit join table, so the pairing can later carry attributes if needed.
+model ProjectSkill {
+  projectId String @map("project_id")
+  skillId   String @map("skill_id")
+
+  // Cascade: deleting a project removes its tag rows rather than failing on a
+  // constraint. The skill itself is never removed by a project delete.
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, skillId])
+  @@map("project_skills")
+}
+
+model Experience {
+  id String @id @default(uuid())
+
+  company   String
+  role      String
+  startDate DateTime @map("start_date") @db.Date
+  /// Null denotes a current role (D3.1).
+  endDate   DateTime? @map("end_date") @db.Date
+  summary   String?
+  /// Allows manual override of date sorting.
+  displayOrder Int @default(0) @map("display_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([displayOrder])
+  @@map("experience")
+}
+
+model Certification {
+  id            String   @id @default(uuid())
+  title         String
+  issuer        String
+  issueDate     DateTime @map("issue_date") @db.Date
+  credentialUrl String?  @map("credential_url")
+  credentialId  String?  @map("credential_id")
+  imagePath     String?  @map("image_path")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// Indexed for reverse-chronological listing.
+  @@index([issueDate])
+  @@map("certifications")
+}
+
+/// Same shape as Experience but kept separate — they are displayed and edited
+/// independently (D3.1).
+model Education {
+  id            String    @id @default(uuid())
+  institution   String
+  qualification String
+  field         String
+  startDate     DateTime  @map("start_date") @db.Date
+  endDate       DateTime? @map("end_date") @db.Date
+  summary       String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([startDate])
+  @@map("education")
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+
+  @@map("message_status")
+}
+
+/// Written by the public contact endpoint, read only by the admin.
+model Message {
+  id      String        @id @default(uuid())
+  name    String
+  email   String
+  subject String
+  message String
+  status  MessageStatus @default(UNREAD)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Both drive inbox queries.
+  @@index([status])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+/// Multiple versions retained; exactly one active at a time, enforced in the
+/// service layer (D3.1).
+model ResumeVersion {
+  id          String  @id @default(uuid())
+  title       String
+  storagePath String  @map("storage_path")
+  isActive    Boolean @default(false) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("resume_versions")
+}
+
+/// Singleton row. Social links are held as JSON so a new platform does not
+/// require a migration (D3.1).
+model SiteSettings {
+  id          String  @id @default(uuid())
+  siteTitle   String  @map("site_title")
+  tagline     String?
+  bio         String?
+  emailPublic String? @map("email_public")
+  location    String?
+  socialLinks Json    @default("[]") @map("social_links")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
