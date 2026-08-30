@@ -26,6 +26,16 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+async function fillValidMessage(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(/^name$/i), 'Ada Lovelace');
+  await user.type(screen.getByLabelText(/^email$/i), 'ada@example.com');
+  await user.type(screen.getByLabelText(/^subject$/i), 'About a role');
+  await user.type(
+    screen.getByLabelText(/^message$/i),
+    'I read through the architecture notes and had a question about the boundary.',
+  );
+}
+
 describe('ContactForm', () => {
   it('rejects invalid input without dispatching a request', async () => {
     const user = userEvent.setup();
@@ -69,7 +79,7 @@ describe('ContactForm', () => {
     expect(await screen.findByText(/your message has been sent/i)).toBeInTheDocument();
   });
 
-  it('silently discards a submission that fills the honeypot', async () => {
+  it('sends the honeypot value for the server to judge', async () => {
     const user = userEvent.setup();
     const { container } = renderForm();
     await waitPastDwellCheck();
@@ -77,30 +87,27 @@ describe('ContactForm', () => {
     const honeypot = container.querySelector<HTMLInputElement>('input[name="company"]')!;
     await user.type(honeypot, 'spam-bot-co');
 
-    await user.type(screen.getByLabelText(/^name$/i), 'Ada Lovelace');
-    await user.type(screen.getByLabelText(/^email$/i), 'ada@example.com');
-    await user.type(screen.getByLabelText(/^subject$/i), 'About a role');
-    await user.type(screen.getByLabelText(/^message$/i), 'A long enough message body here.');
-
+    await fillValidMessage(user);
     await user.click(screen.getByRole('button', { name: /send message/i }));
 
-    // Success is simulated and no signal is given that it was rejected (C6).
-    expect(await screen.findByText(/your message has been sent/i)).toBeInTheDocument();
-    expect(content.submitContact).not.toHaveBeenCalled();
+    // The client reports the signal; it does not decide. A browser check is
+    // trivially bypassed, so the discard happens server-side (C6).
+    await waitFor(() => expect(content.submitContact).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(content.submitContact).mock.calls[0]?.[0]).toMatchObject({
+      company: 'spam-bot-co',
+    });
   });
 
-  it('discards a submission made faster than a person could type', async () => {
+  it('sends how long the form was on screen', async () => {
     const user = userEvent.setup();
     renderForm();
-    // Deliberately no dwell wait.
+    await waitPastDwellCheck();
 
-    await user.type(screen.getByLabelText(/^name$/i), 'Ada Lovelace');
-    await user.type(screen.getByLabelText(/^email$/i), 'ada@example.com');
-    await user.type(screen.getByLabelText(/^subject$/i), 'Hello');
-    await user.type(screen.getByLabelText(/^message$/i), 'A long enough message body here.');
-
+    await fillValidMessage(user);
     await user.click(screen.getByRole('button', { name: /send message/i }));
 
-    expect(content.submitContact).not.toHaveBeenCalled();
+    await waitFor(() => expect(content.submitContact).toHaveBeenCalledTimes(1));
+    const submitted = vi.mocked(content.submitContact).mock.calls[0]?.[0] as { dwellMs: number };
+    expect(submitted.dwellMs).toBeGreaterThan(2000);
   });
 });

@@ -15,7 +15,8 @@
     "db:deploy": "cross-env NODE_OPTIONS=--use-system-ca prisma migrate deploy",
     "db:seed": "cross-env NODE_OPTIONS=--use-system-ca prisma db seed",
     "db:studio": "cross-env NODE_OPTIONS=--use-system-ca prisma studio",
-    "admin:create": "tsx scripts/create-admin.ts"
+    "admin:create": "tsx scripts/create-admin.ts",
+    "storage:init": "tsx scripts/create-buckets.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -25,13 +26,16 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
+    "file-type": "^21.3.4",
     "helmet": "^8.1.0",
     "jose": "^6.2.10",
+    "multer": "^2.3.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
     "@types/node": "^24.10.1",
     "@types/supertest": "^6.0.3",
     "cross-env": "^10.1.0",

@@ -12,6 +12,7 @@ import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { cn } from '@/lib/cn';
 import { AdminHeader, EntityRow, FormActions, FormPanel } from '../components/AdminPanels';
 import { useEntityForm } from '../components/useEntityForm';
+import { FileUploadField } from '../components/FileUploadField';
 import type { Project, Skill } from '@/types/content';
 
 interface ProjectValues extends Record<string, unknown> {
@@ -24,6 +25,8 @@ interface ProjectValues extends Record<string, unknown> {
   liveUrl: string;
   featured: boolean;
   skillIds: string[];
+  imagePath: string;
+  imageUrl: string | null;
 }
 
 const EMPTY: ProjectValues = {
@@ -36,6 +39,8 @@ const EMPTY: ProjectValues = {
   liveUrl: '',
   featured: false,
   skillIds: [],
+  imagePath: '',
+  imageUrl: null,
 };
 
 const STATUS_OPTIONS = [
@@ -158,6 +163,8 @@ function ProjectForm({
         liveUrl: project.liveUrl ?? '',
         featured: project.featured,
         skillIds: project.skills.map((skill) => skill.id),
+        imagePath: '',
+        imageUrl: project.imageUrl,
       }
     : EMPTY;
 
@@ -176,6 +183,7 @@ function ProjectForm({
         liveUrl: v.liveUrl || null,
         featured: v.featured,
         skillIds: v.skillIds,
+        ...(v.imagePath ? { imagePath: v.imagePath } : {}),
       };
       return project ? admin.updateProject(project.id, body) : admin.createProject(body);
     },
@@ -270,6 +278,23 @@ function ProjectForm({
             onChange={(e) => setField('featured', e.target.checked)}
           />
         </div>
+
+        <FileUploadField
+          label="Cover image"
+          kind="image"
+          accept="image/png,image/jpeg,image/webp,image/avif"
+          hint="Optional. Shown on the project card at 16:9. Up to 3 MB."
+          currentPath={values.imagePath || null}
+          currentUrl={values.imageUrl}
+          onUploaded={(path, url) => {
+            setField('imagePath', path);
+            setField('imageUrl', url);
+          }}
+          onCleared={() => {
+            setField('imagePath', '');
+            setField('imageUrl', null);
+          }}
+        />
 
         <SkillPicker
           skills={skills}

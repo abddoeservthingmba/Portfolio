@@ -25,6 +25,7 @@ import { CertificationsAdminPage } from '@/admin/pages/CertificationsAdminPage';
 import { EducationAdminPage } from '@/admin/pages/EducationAdminPage';
 import { ResumeAdminPage } from '@/admin/pages/ResumeAdminPage';
 import { SettingsAdminPage } from '@/admin/pages/SettingsAdminPage';
+import { MessagesAdminPage } from '@/admin/pages/MessagesAdminPage';
 
 /**
  * Two route branches over one app.
@@ -67,6 +68,7 @@ export function App() {
                 <Route path="certifications" element={<CertificationsAdminPage />} />
                 <Route path="education" element={<EducationAdminPage />} />
                 <Route path="resume" element={<ResumeAdminPage />} />
+                <Route path="messages" element={<MessagesAdminPage />} />
                 <Route path="settings" element={<SettingsAdminPage />} />
               </Route>
             </Route>

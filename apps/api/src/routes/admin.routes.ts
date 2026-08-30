@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { validate } from '../middleware/validate.js';
 import * as controller from '../controllers/admin.controller.js';
+import * as uploadsController from '../controllers/uploads.controller.js';
+import * as contactController from '../controllers/contact.controller.js';
 import {
   createCertificationSchema,
   createEducationSchema,
@@ -18,6 +20,7 @@ import {
   updateSettingsSchema,
   updateSkillSchema,
 } from '../schemas/admin.schemas.js';
+import { messageQuerySchema, messageStatusSchema } from '../schemas/contact.schemas.js';
 
 /**
  * Every route on this router is behind requireAuth (applied once, below), and
@@ -92,3 +95,20 @@ adminRoutes.delete('/resume/:id', withId, controller.deleteResume);
 
 // Settings — a singleton, so update only.
 adminRoutes.patch('/settings', validate(updateSettingsSchema), controller.updateSettings);
+
+// --- Uploads (Phase 5) ------------------------------------------------------
+// Multipart, so no JSON schema applies. Type, size and path generation are all
+// enforced server-side in the upload service.
+adminRoutes.get('/uploads/limits', uploadsController.getUploadLimits);
+adminRoutes.post('/uploads', uploadsController.receiveFile, uploadsController.uploadFile);
+
+// --- Contact inbox (Phase 5) ------------------------------------------------
+adminRoutes.get('/messages', validate(messageQuerySchema, 'query'), contactController.listMessages);
+adminRoutes.get('/messages/unread-count', contactController.countUnread);
+adminRoutes.patch(
+  '/messages/:id',
+  withId,
+  validate(messageStatusSchema),
+  contactController.updateMessage,
+);
+adminRoutes.delete('/messages/:id', withId, contactController.deleteMessage);

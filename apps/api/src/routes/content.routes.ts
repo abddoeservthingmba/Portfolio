@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
+import { publicWriteRateLimit } from '../middleware/rateLimit.js';
 import * as controller from '../controllers/content.controller.js';
+import * as contactController from '../controllers/contact.controller.js';
+import { contactSchema } from '../schemas/contact.schemas.js';
 import {
   projectQuerySchema,
   projectSlugSchema,
@@ -24,3 +27,17 @@ contentRoutes.get('/certifications', controller.listCertifications);
 contentRoutes.get('/education', controller.listEducation);
 contentRoutes.get('/resume', controller.getResume);
 contentRoutes.get('/settings', controller.getSettings);
+
+/**
+ * The one exception to "every public route is a GET": the contact endpoint,
+ * where an anonymous visitor causes a write (C6).
+ *
+ * It is therefore the only public route carrying a rate limit, and it accepts
+ * the narrowest payload in the system.
+ */
+contentRoutes.post(
+  '/contact',
+  publicWriteRateLimit,
+  validate(contactSchema),
+  contactController.submit,
+);

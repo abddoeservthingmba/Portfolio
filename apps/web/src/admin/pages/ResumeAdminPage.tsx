@@ -13,11 +13,13 @@ import { formatFullDate } from '@/lib/format';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { AdminHeader, EntityRow, FormActions, FormPanel } from '../components/AdminPanels';
 import { useEntityForm } from '../components/useEntityForm';
+import { FileUploadField } from '../components/FileUploadField';
 import type { ResumeVersion } from '@/types/content';
 
 interface ResumeValues extends Record<string, unknown> {
   title: string;
   storagePath: string;
+  fileUrl: string | null;
   isActive: boolean;
 }
 
@@ -45,13 +47,6 @@ export function ResumeAdminPage() {
         description="Every version is kept; exactly one is active and served publicly."
         action={!isCreating && <Button onClick={() => setIsCreating(true)}>Add version</Button>}
       />
-
-      <Card className="mb-6 border-dashed p-4">
-        <p className="text-sm text-muted">
-          <strong className="text-text">File uploads arrive in Phase 5.</strong> For now a version
-          records a storage path — once uploads exist, this page will take the file directly.
-        </p>
-      </Card>
 
       {isCreating && (
         <ResumeForm
@@ -145,7 +140,7 @@ function ResumeRow({
 
 function ResumeForm({ onCancel, onSaved }: { onCancel: () => void; onSaved: () => void }) {
   const { values, setField, errors, isSubmitting, handleSubmit } = useEntityForm<ResumeValues>({
-    initial: { title: '', storagePath: '', isActive: true },
+    initial: { title: '', storagePath: '', fileUrl: null, isActive: true },
     successMessage: 'Resume version added.',
     onSaved,
     submit: (v) =>
@@ -167,14 +162,24 @@ function ResumeForm({ onCancel, onSaved }: { onCancel: () => void; onSaved: () =
             error={errors.title}
             onChange={(e) => setField('title', e.target.value)}
           />
-          <InputField
-            label="Storage path"
-            hint="Path in the resume bucket, or a full URL"
-            value={values.storagePath}
-            error={errors.storagePath}
-            onChange={(e) => setField('storagePath', e.target.value)}
-          />
         </div>
+
+        <FileUploadField
+          label="Resume file"
+          kind="resume"
+          accept="application/pdf"
+          hint="PDF only, up to 5 MB."
+          currentPath={values.storagePath || null}
+          currentUrl={values.fileUrl}
+          onUploaded={(path, url) => {
+            setField('storagePath', path);
+            setField('fileUrl', url);
+          }}
+          onCleared={() => {
+            setField('storagePath', '');
+            setField('fileUrl', null);
+          }}
+        />
 
         <CheckboxField
           label="Make this the active version"

@@ -87,17 +87,15 @@ export async function getSettings(): Promise<SiteSettings> {
 /**
  * POST /contact.
  *
- * NOT YET IMPLEMENTED SERVER-SIDE. The contact endpoint, its abuse controls and
- * the admin inbox are Phase 5 (FR-09, FR-26) — Phase 3 delivers the public read
- * surface only.
- *
- * This throws rather than pretending to succeed. A form that silently discards
- * a real message is worse than one that says it could not send.
+ * The honeypot and dwell time are sent for the server to judge — the client
+ * does not decide whether a submission is automated. Both heuristics fail
+ * silently there, so this resolves either way (C6).
  */
-export async function submitContact(_submission: ContactSubmission): Promise<void> {
-  throw new ApiError(
-    'INTERNAL_ERROR',
-    'Sending messages is not available yet. Please use the email address listed on this page.',
-    501,
-  );
+export async function submitContact(
+  submission: ContactSubmission & { company?: string; dwellMs?: number },
+): Promise<void> {
+  await apiRequest<{ received: boolean }>('/contact', {
+    method: 'POST',
+    body: submission,
+  });
 }

@@ -13,6 +13,7 @@ import { formatFullDate } from '@/lib/format';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { AdminHeader, EntityRow, FormActions, FormPanel } from '../components/AdminPanels';
 import { useEntityForm } from '../components/useEntityForm';
+import { FileUploadField } from '../components/FileUploadField';
 import type { Certification } from '@/types/content';
 
 interface CertificationValues extends Record<string, unknown> {
@@ -21,6 +22,8 @@ interface CertificationValues extends Record<string, unknown> {
   issueDate: string;
   credentialUrl: string;
   credentialId: string;
+  imagePath: string;
+  imageUrl: string | null;
 }
 
 const EMPTY: CertificationValues = {
@@ -29,6 +32,8 @@ const EMPTY: CertificationValues = {
   issueDate: '',
   credentialUrl: '',
   credentialId: '',
+  imagePath: '',
+  imageUrl: null,
 };
 
 export function CertificationsAdminPage() {
@@ -132,6 +137,8 @@ function CertificationForm({
         issueDate: certification.issueDate,
         credentialUrl: certification.credentialUrl ?? '',
         credentialId: certification.credentialId ?? '',
+        imagePath: '',
+        imageUrl: certification.imageUrl,
       }
     : EMPTY;
 
@@ -147,6 +154,8 @@ function CertificationForm({
           issueDate: v.issueDate,
           credentialUrl: v.credentialUrl || null,
           credentialId: v.credentialId || null,
+          // Only sent when a new file was uploaded in this session.
+          ...(v.imagePath ? { imagePath: v.imagePath } : {}),
         };
         return certification
           ? admin.updateCertification(certification.id, body)
@@ -198,6 +207,23 @@ function CertificationForm({
             onChange={(e) => setField('credentialId', e.target.value)}
           />
         </div>
+
+        <FileUploadField
+          label="Certificate image or PDF"
+          kind="certificate"
+          accept="image/png,image/jpeg,image/webp,application/pdf"
+          hint="Optional. PNG, JPEG, WebP or PDF, up to 5 MB."
+          currentPath={values.imagePath || null}
+          currentUrl={values.imageUrl}
+          onUploaded={(path, url) => {
+            setField('imagePath', path);
+            setField('imageUrl', url);
+          }}
+          onCleared={() => {
+            setField('imagePath', '');
+            setField('imageUrl', null);
+          }}
+        />
 
         <FormActions isSubmitting={isSubmitting} formError={errors._} />
       </form>

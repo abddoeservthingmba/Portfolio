@@ -20,6 +20,7 @@ const SECTIONS = [
   { to: '/admin/certifications', label: 'Certifications' },
   { to: '/admin/education', label: 'Education' },
   { to: '/admin/resume', label: 'Resume' },
+  { to: '/admin/messages', label: 'Messages' },
   { to: '/admin/settings', label: 'Settings' },
 ];
 

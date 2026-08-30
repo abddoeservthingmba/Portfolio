@@ -50,6 +50,14 @@ const ADMIN_ROUTES: Array<[method: 'get' | 'post' | 'patch' | 'delete', path: st
   ['delete', `/admin/resume/${UUID}`],
 
   ['patch', '/admin/settings'],
+
+  ['get', '/admin/uploads/limits'],
+  ['post', '/admin/uploads'],
+
+  ['get', '/admin/messages'],
+  ['get', '/admin/messages/unread-count'],
+  ['patch', `/admin/messages/${UUID}`],
+  ['delete', `/admin/messages/${UUID}`],
 ];
 
 describe('auth boundary — no token', () => {

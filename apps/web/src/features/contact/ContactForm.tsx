@@ -8,9 +8,6 @@ import type { ContactSubmission } from '@/types/content';
 
 const EMPTY: ContactSubmission = { name: '', email: '', subject: '', message: '' };
 
-/** Below this, the submission was almost certainly not typed by a person (C6). */
-const MIN_DWELL_MS = 2000;
-
 export function ContactForm() {
   const [values, setValues] = useState<ContactSubmission>(EMPTY);
   const [errors, setErrors] = useState<ContactErrors>({});
@@ -18,20 +15,12 @@ export function ContactForm() {
   const toast = useToast();
 
   // Honeypot: a hidden field a human never fills, and the moment the form was
-  // mounted. Both are bot heuristics and both fail silently — a scripted
-  // submitter is never told why it was rejected (C6).
+  // mounted. Both travel to the server, which is where they are judged.
   const [honeypot, setHoneypot] = useState('');
   const mountedAt = useRef(Date.now());
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const looksAutomated = honeypot !== '' || Date.now() - mountedAt.current < MIN_DWELL_MS;
-    if (looksAutomated) {
-      // Simulate success and discard. Giving no signal is the entire point.
-      resetToSuccess();
-      return;
-    }
 
     const found = validateContact(values);
     setErrors(found);
@@ -39,7 +28,14 @@ export function ContactForm() {
 
     setIsSubmitting(true);
     try {
-      await submitContact(values);
+      // The heuristics are sent, not judged here. The server decides, and
+      // discards silently — so a real submission and a discarded one look
+      // identical from this side (C6).
+      await submitContact({
+        ...values,
+        company: honeypot,
+        dwellMs: Date.now() - mountedAt.current,
+      });
       resetToSuccess();
     } catch {
       toast.error('Your message could not be sent. Please try again in a moment.');

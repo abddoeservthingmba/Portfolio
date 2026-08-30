@@ -1,4 +1,4 @@
-import { apiRequest, type RequestOptions } from './api';
+import { apiRequest, ApiError, type RequestOptions } from './api';
 import { getAccessToken } from './supabase';
 import type {
   Certification,
@@ -110,3 +110,86 @@ export const deleteResume = (id: string) =>
 
 export const updateSettings = (body: unknown) =>
   adminRequest<SiteSettings>('/settings', { method: 'PATCH', body });
+
+// --- Uploads (Phase 5) ------------------------------------------------------
+
+export type AssetKind = 'image' | 'certificate' | 'resume';
+
+export interface UploadResult {
+  kind: AssetKind;
+  path: string;
+  url: string | null;
+  contentType: string;
+  bytes: number;
+}
+
+/**
+ * Uploads one file as multipart.
+ *
+ * `previousPath` travels with the request so the server can delete the orphan
+ * after the new object is committed — in that order, so a failure leaves a
+ * stale file rather than a broken reference.
+ *
+ * This bypasses apiRequest because that helper always sends JSON; the browser
+ * must set its own multipart boundary, so Content-Type is deliberately unset.
+ */
+export async function uploadAsset(
+  kind: AssetKind,
+  file: File,
+  previousPath?: string | null,
+): Promise<UploadResult> {
+  const token = await getAccessToken();
+
+  const form = new FormData();
+  form.append('kind', kind);
+  form.append('file', file);
+  if (previousPath) form.append('previousPath', previousPath);
+
+  const base = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+
+  const response = await fetch(`${base}/admin/uploads`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+
+  const payload = (await response.json().catch(() => null)) as {
+    data?: UploadResult;
+    error?: { code: string; message: string };
+  } | null;
+
+  if (!response.ok) {
+    throw new ApiError(
+      (payload?.error?.code as never) ?? 'INTERNAL_ERROR',
+      payload?.error?.message ?? 'Upload failed.',
+      response.status,
+    );
+  }
+
+  return payload!.data!;
+}
+
+// --- Contact inbox (Phase 5) ------------------------------------------------
+
+export type MessageStatus = 'UNREAD' | 'READ' | 'ARCHIVED';
+
+export interface Message {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: MessageStatus;
+  createdAt: string;
+}
+
+export const listMessages = (status?: MessageStatus) =>
+  adminRequest<Message[]>('/messages', { query: status ? { status } : {} });
+
+export const getUnreadCount = () => adminRequest<{ unread: number }>('/messages/unread-count');
+
+export const setMessageStatus = (id: string, status: MessageStatus) =>
+  adminRequest<Message>(`/messages/${id}`, { method: 'PATCH', body: { status } });
+
+export const deleteMessage = (id: string) =>
+  adminRequest<void>(`/messages/${id}`, { method: 'DELETE' });
