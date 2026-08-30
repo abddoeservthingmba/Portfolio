@@ -277,7 +277,7 @@ Three placeholders in `netlify.toml` must be replaced with the real hostnames �
    | `SUPABASE_URL` | The project URL |
    | `SUPABASE_SERVICE_ROLE_KEY` | **Secret.** Server-side only |
    | `SUPABASE_JWT_SECRET` | Only needed if the project ever moves to symmetric signing |
-   | `ALLOWED_ORIGINS` | The exact Netlify origin, e.g. `https://yoursite.netlify.app`. No wildcard, no trailing slash |
+   | `ALLOWED_ORIGINS` | The exact Netlify origin, e.g. `https://abdsportfoilo.netlify.app`. No wildcard, no trailing slash |
    | `PUBLIC_SITE_URL` | The same origin. Used to build absolute sitemap URLs |
 
 3. Deploy. `startCommand` runs `prisma migrate deploy` before the server accepts traffic, so the schema is never behind the code that expects it. `migrate deploy` applies committed migrations only — it never generates one and never prompts.
@@ -303,7 +303,7 @@ not be on PATH at runtime, and yarn cannot run here at all.
 
    | Variable | Value |
    | --- | --- |
-   | `VITE_API_BASE_URL` | `https://your-api.onrender.com/api/v1` |
+   | `VITE_API_BASE_URL` | `https://portfolio-y4fy.onrender.com/api/v1` |
    | `VITE_SUPABASE_URL` | The Supabase project URL |
    | `VITE_SUPABASE_ANON_KEY` | The anon key — the only Supabase key that may reach a browser |
 
@@ -312,9 +312,9 @@ not be on PATH at runtime, and yarn cannot run here at all.
 ### 3. Verify
 
 ```bash
-curl https://your-api.onrender.com/api/v1/health     # database: "ok"
-curl https://yoursite.netlify.app/sitemap.xml        # rewritten to the API
-curl https://yoursite.netlify.app/robots.txt         # Sitemap line matches the site
+curl https://portfolio-y4fy.onrender.com/api/v1/health     # database: "ok"
+curl https://abdsportfoilo.netlify.app/sitemap.xml        # rewritten to the API
+curl https://abdsportfoilo.netlify.app/robots.txt         # Sitemap line matches the site
 ```
 
 Then, by hand: load the site, open a project, sign in at `/admin`, edit something, and confirm it appears publicly.

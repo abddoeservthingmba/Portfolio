@@ -20,13 +20,13 @@
 
 [[redirects]]
   from = "/sitemap.xml"
-  to = "https://YOUR-API.onrender.com/api/v1/sitemap.xml"
+  to = "https://portfolio-y4fy.onrender.com/api/v1/sitemap.xml"
   status = 200
   force = true
 
 [[redirects]]
   from = "/robots.txt"
-  to = "https://YOUR-API.onrender.com/api/v1/robots.txt"
+  to = "https://portfolio-y4fy.onrender.com/api/v1/robots.txt"
   status = 200
   force = true
 
@@ -60,9 +60,9 @@
       default-src 'self';
       script-src 'self';
       style-src 'self' 'unsafe-inline';
-      img-src 'self' data: blob: https://YOUR-PROJECT.supabase.co;
+      img-src 'self' data: blob: https://dbmjasavjofnrhwyymwj.supabase.co;
       font-src 'self' data:;
-      connect-src 'self' https://YOUR-API.onrender.com https://YOUR-PROJECT.supabase.co;
+      connect-src 'self' https://portfolio-y4fy.onrender.com https://dbmjasavjofnrhwyymwj.supabase.co;
       frame-ancestors 'none';
       base-uri 'self';
       form-action 'self'
