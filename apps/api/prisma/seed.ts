@@ -142,14 +142,16 @@ const CERTIFICATIONS = [
     issuer: 'Microsoft & LinkedIn',
     // No month given on the resume; recorded as the year it was completed.
     issueDate: new Date('2024-01-01'),
-    credentialUrl: null,
+    credentialUrl:
+      'https://www.linkedin.com/learning/certificates/9f5622dafa9c2931bf36a0f27ed7cdda776d9cee6653b2babd247591394dba5b',
     credentialId: null,
   },
   {
     title: 'Foundational C# with Microsoft',
     issuer: 'FreeCodeCamp',
     issueDate: new Date('2023-01-01'),
-    credentialUrl: null,
+    credentialUrl:
+      'https://freecodecamp.org/certification/SulthanAbdullahkhan/foundational-c-sharp-with-microsoft',
     credentialId: null,
   },
 ];

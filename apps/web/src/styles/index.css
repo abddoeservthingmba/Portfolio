@@ -477,3 +477,55 @@
     transform: none;
   }
 }
+
+@layer utilities {
+  /*
+   * Word-by-word heading reveal. Each word is translated fully below its mask,
+   * so it rises into view rather than fading in place — the difference between
+   * an animation and a transition that happens to move.
+   */
+  .js .split-word {
+    transform: translate3d(0, 110%, 0);
+    transition: transform 0.9s var(--ease-out-expo);
+    transition-delay: calc(var(--i, 0) * 45ms);
+  }
+
+  .js .split-reveal[data-revealed] .split-word {
+    transform: none;
+  }
+
+  /*
+   * Squash-and-stretch on press. Two axes moving by different amounts is what
+   * reads as physical rather than as a scale.
+   */
+  .squish {
+    transition: transform 0.45s var(--ease-spring);
+  }
+
+  .squish:hover {
+    transform: scale3d(1.04, 0.96, 1);
+  }
+
+  .squish:active {
+    transform: scale3d(0.94, 1.03, 1);
+  }
+
+  /* Underline that draws in from the left rather than appearing. */
+  .link-draw {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 0.45s var(--ease-out-expo);
+  }
+
+  .link-draw:hover {
+    background-size: 100% 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .split-word {
+    transform: none !important;
+  }
+}

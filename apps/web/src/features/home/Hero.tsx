@@ -1,7 +1,10 @@
 import { Link } from 'react-router';
 import { buttonStyles } from '@/components/buttonStyles';
+import { cn } from '@/lib/cn';
 import { Skeleton } from '@/components/Skeleton';
 import { Reveal } from '@/components/motion/Reveal';
+import { SplitText, SplitReveal } from '@/components/motion/SplitText';
+import { Magnetic } from '@/components/motion/Magnetic';
 import type { SiteSettings } from '@/types/content';
 
 /**
@@ -45,16 +48,18 @@ export function Hero({
         </span>
       </Reveal>
 
-      <Reveal index={1} as="h1" className="mt-7">
-        <span className="block text-[clamp(2.5rem,8vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-text">
-          {firstName}
-        </span>
-        {rest.length > 0 && (
-          <span className="text-gradient block text-[clamp(2.5rem,8vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
-            {rest.join(' ')}
+      <h1 className="mt-7">
+        <SplitReveal>
+          <span className="block text-[clamp(2.5rem,8vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.04em] text-text">
+            <SplitText text={firstName ?? ''} />
           </span>
-        )}
-      </Reveal>
+          {rest.length > 0 && (
+            <span className="text-gradient block text-[clamp(2.5rem,8vw,5.5rem)] font-semibold leading-[0.95] tracking-[-0.04em]">
+              <SplitText text={rest.join(' ')} startIndex={1} />
+            </span>
+          )}
+        </SplitReveal>
+      </h1>
 
       {settings?.tagline && (
         <Reveal index={2} as="p" className="mt-6 max-w-2xl text-lg text-muted sm:text-xl">
@@ -69,18 +74,22 @@ export function Hero({
       )}
 
       <Reveal index={4} className="mt-9 flex flex-wrap items-center gap-3">
-        <Link to="/projects" className={buttonStyles('primary', 'lg')}>
-          View work
-          <span
-            aria-hidden="true"
-            className="transition-transform duration-300 group-hover:translate-x-1"
-          >
-            →
-          </span>
-        </Link>
-        <Link to="/contact" className={buttonStyles('secondary', 'lg')}>
-          Get in touch
-        </Link>
+        <Magnetic>
+          <Link to="/projects" className={cn(buttonStyles('primary', 'lg'), 'squish group')}>
+            View work
+            <span
+              aria-hidden="true"
+              className="transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:translate-x-1"
+            >
+              →
+            </span>
+          </Link>
+        </Magnetic>
+        <Magnetic>
+          <Link to="/contact" className={cn(buttonStyles('secondary', 'lg'), 'squish')}>
+            Get in touch
+          </Link>
+        </Magnetic>
       </Reveal>
     </section>
   );

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Reveal } from './motion/Reveal';
+import { SplitText, SplitReveal } from './motion/SplitText';
 
 /**
  * The heading block every public route opens with. One <h1> per page lives
@@ -26,13 +27,11 @@ export function PageHeader({
         </Reveal>
       )}
 
-      <Reveal
-        index={1}
-        as="h1"
-        className="text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-text"
-      >
-        {title}
-      </Reveal>
+      <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-text">
+        <SplitReveal>
+          <SplitText text={title} />
+        </SplitReveal>
+      </h1>
 
       {description && (
         <Reveal index={2} as="p" className="mt-4 max-w-prose text-base leading-relaxed text-muted">

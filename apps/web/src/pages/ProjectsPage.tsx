@@ -6,8 +6,8 @@ import { getProjects, getSkills } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
 import { AsyncSection, EmptyState } from '@/components/States';
-import { SkeletonCards } from '@/components/Skeleton';
-import { ProjectGrid } from '@/features/projects/ProjectGrid';
+import { SkeletonRows } from '@/components/Skeleton';
+import { ProjectIndex } from '@/features/projects/ProjectIndex';
 import { ProjectFilters } from '@/features/projects/ProjectFilters';
 
 /** Long enough that typing does not fire a request per keystroke. */
@@ -92,7 +92,7 @@ export function ProjectsPage() {
         error={projects.error}
         data={projects.data}
         onRetry={projects.retry}
-        skeleton={<SkeletonCards count={6} />}
+        skeleton={<SkeletonRows count={5} />}
         empty={
           isFiltered ? (
             <EmptyState
@@ -112,7 +112,7 @@ export function ProjectsPage() {
             <p className="sr-only" role="status">
               {list.length} {list.length === 1 ? 'project' : 'projects'} found
             </p>
-            <ProjectGrid projects={list} />
+            <ProjectIndex projects={list} />
           </>
         )}
       </AsyncSection>

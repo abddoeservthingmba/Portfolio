@@ -11,7 +11,7 @@ import { useEffect } from 'react';
  * back up, which reads as broken rather than delightful.
  */
 
-const REVEAL_SELECTOR = '.reveal, .reveal-scale';
+const REVEAL_SELECTOR = '.reveal, .reveal-scale, .split-reveal';
 
 let observer: IntersectionObserver | null = null;
 
