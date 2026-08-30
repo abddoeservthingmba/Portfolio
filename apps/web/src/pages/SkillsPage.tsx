@@ -1,4 +1,5 @@
 import { useAsync } from '@/lib/useAsync';
+import { useReveal } from '@/lib/useReveal';
 import { getSkills } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
@@ -9,6 +10,9 @@ import { groupByCategory } from '@/features/skills/groupByCategory';
 
 export function SkillsPage() {
   const skills = useAsync(() => getSkills(), []);
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([skills.data]);
 
   useDocumentMeta({
     title: 'Skills',

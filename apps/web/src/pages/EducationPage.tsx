@@ -1,4 +1,5 @@
 import { useAsync } from '@/lib/useAsync';
+import { useReveal } from '@/lib/useReveal';
 import { getEducation } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
@@ -8,6 +9,9 @@ import { EducationCard } from '@/features/education/EducationCard';
 
 export function EducationPage() {
   const education = useAsync(() => getEducation(), []);
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([education.data]);
 
   useDocumentMeta({
     title: 'Education',

@@ -3,103 +3,149 @@
 /*
  * Design tokens (D12: tokens before components).
  *
- * Colour is defined once as semantic roles — surface, text, accent — rather
- * than as palette names, so a redesign is an edit here and nowhere else. No
- * component may use a literal colour value.
+ * Dark-first. The palette is near-black with a single electric accent and a
+ * lot of depth — light mode is a first-class translation of the same roles,
+ * not an afterthought.
  *
- * Three theme states: no data-theme follows the system setting, and an explicit
- * data-theme wins in both directions.
+ * Every animated property below is transform, opacity or filter. Those run on
+ * the compositor, so motion stays at 60fps without touching layout. Nothing
+ * here animates width, height, top or left.
  */
 
 :root {
   color-scheme: light;
 
-  --bg: oklch(99% 0.003 260);
+  --bg: oklch(97.5% 0.004 265);
+  --bg-elevated: oklch(99.5% 0.002 265);
   --surface: oklch(100% 0 0);
-  --surface-raised: oklch(97.2% 0.004 260);
-  --border: oklch(91% 0.006 260);
-  --border-strong: oklch(84% 0.008 260);
+  --surface-raised: oklch(97% 0.005 265);
+  --surface-sunken: oklch(94.5% 0.006 265);
+  --border: oklch(90% 0.008 265);
+  --border-strong: oklch(80% 0.012 265);
 
-  --text: oklch(24% 0.02 260);
-  --text-muted: oklch(50% 0.015 260);
-  --text-subtle: oklch(62% 0.012 260);
+  --text: oklch(18% 0.02 265);
+  --text-muted: oklch(46% 0.017 265);
+  --text-subtle: oklch(60% 0.014 265);
 
-  --accent: oklch(52% 0.13 245);
-  --accent-hover: oklch(46% 0.13 245);
+  --accent: oklch(58% 0.16 162);
+  --accent-hover: oklch(52% 0.17 162);
   --accent-fg: oklch(100% 0 0);
-  --accent-subtle: oklch(95% 0.03 245);
+  --accent-subtle: oklch(94% 0.05 162);
+  --accent-glow: oklch(58% 0.16 162 / 0.28);
 
-  --danger: oklch(52% 0.19 27);
+  --accent-2: oklch(60% 0.19 285);
+  --accent-3: oklch(72% 0.17 75);
+
+  --danger: oklch(53% 0.2 27);
   --danger-subtle: oklch(96% 0.03 27);
-  --success: oklch(52% 0.13 155);
-  --success-subtle: oklch(95% 0.04 155);
+  --success: oklch(55% 0.15 158);
+  --success-subtle: oklch(95% 0.05 158);
 
-  --ring: oklch(52% 0.13 245);
+  --ring: oklch(58% 0.16 162);
+
+  /* Depth. Dark mode swaps these for glows rather than drop shadows. */
+  --shadow-sm: 0 1px 2px oklch(20% 0.02 265 / 0.05);
+  --shadow-md: 0 4px 16px oklch(20% 0.02 265 / 0.08), 0 1px 3px oklch(20% 0.02 265 / 0.05);
+  --shadow-lg: 0 16px 48px oklch(20% 0.02 265 / 0.12), 0 4px 12px oklch(20% 0.02 265 / 0.06);
+  --shadow-glow: 0 0 0 transparent;
+
+  --grain-opacity: 0.028;
 }
 
+/*
+ * The dark palette is written twice on purpose: once for the system setting
+ * and once for an explicit choice. CSS has no way to share a declaration block
+ * between two selectors that must not be merged, and duplicating twenty
+ * variables is cheaper than the indirection a preprocessor would add.
+ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --bg: oklch(17% 0.012 260);
-    --surface: oklch(21% 0.014 260);
-    --surface-raised: oklch(25% 0.016 260);
-    --border: oklch(30% 0.016 260);
-    --border-strong: oklch(38% 0.018 260);
+    --bg: oklch(14% 0.008 265);
+    --bg-elevated: oklch(16.5% 0.009 265);
+    --surface: oklch(18% 0.011 265);
+    --surface-raised: oklch(22% 0.013 265);
+    --surface-sunken: oklch(11.5% 0.007 265);
+    --border: oklch(27% 0.014 265);
+    --border-strong: oklch(38% 0.018 265);
 
-    --text: oklch(95% 0.006 260);
-    --text-muted: oklch(74% 0.012 260);
-    --text-subtle: oklch(62% 0.014 260);
+    --text: oklch(97% 0.004 265);
+    --text-muted: oklch(72% 0.014 265);
+    --text-subtle: oklch(56% 0.016 265);
 
-    --accent: oklch(74% 0.12 245);
-    --accent-hover: oklch(80% 0.12 245);
-    --accent-fg: oklch(18% 0.02 260);
-    --accent-subtle: oklch(28% 0.05 245);
+    --accent: oklch(84% 0.19 162);
+    --accent-hover: oklch(90% 0.19 162);
+    --accent-fg: oklch(14% 0.02 162);
+    --accent-subtle: oklch(26% 0.07 162);
+    --accent-glow: oklch(84% 0.19 162 / 0.35);
 
-    --danger: oklch(70% 0.16 27);
-    --danger-subtle: oklch(28% 0.06 27);
-    --success: oklch(72% 0.13 155);
-    --success-subtle: oklch(27% 0.05 155);
+    --accent-2: oklch(72% 0.19 285);
+    --accent-3: oklch(82% 0.17 75);
 
-    --ring: oklch(74% 0.12 245);
+    --danger: oklch(72% 0.17 27);
+    --danger-subtle: oklch(25% 0.07 27);
+    --success: oklch(82% 0.18 158);
+    --success-subtle: oklch(24% 0.07 158);
+
+    --ring: oklch(84% 0.19 162);
+
+    --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
+    --shadow-md: 0 4px 20px oklch(0% 0 0 / 0.5);
+    --shadow-lg: 0 24px 64px oklch(0% 0 0 / 0.6), 0 8px 20px oklch(0% 0 0 / 0.4);
+
+    --grain-opacity: 0.05;
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: oklch(17% 0.012 260);
-  --surface: oklch(21% 0.014 260);
-  --surface-raised: oklch(25% 0.016 260);
-  --border: oklch(30% 0.016 260);
-  --border-strong: oklch(38% 0.018 260);
+  --bg: oklch(14% 0.008 265);
+  --bg-elevated: oklch(16.5% 0.009 265);
+  --surface: oklch(18% 0.011 265);
+  --surface-raised: oklch(22% 0.013 265);
+  --surface-sunken: oklch(11.5% 0.007 265);
+  --border: oklch(27% 0.014 265);
+  --border-strong: oklch(38% 0.018 265);
 
-  --text: oklch(95% 0.006 260);
-  --text-muted: oklch(74% 0.012 260);
-  --text-subtle: oklch(62% 0.014 260);
+  --text: oklch(97% 0.004 265);
+  --text-muted: oklch(72% 0.014 265);
+  --text-subtle: oklch(56% 0.016 265);
 
-  --accent: oklch(74% 0.12 245);
-  --accent-hover: oklch(80% 0.12 245);
-  --accent-fg: oklch(18% 0.02 260);
-  --accent-subtle: oklch(28% 0.05 245);
+  --accent: oklch(84% 0.19 162);
+  --accent-hover: oklch(90% 0.19 162);
+  --accent-fg: oklch(14% 0.02 162);
+  --accent-subtle: oklch(26% 0.07 162);
+  --accent-glow: oklch(84% 0.19 162 / 0.35);
 
-  --danger: oklch(70% 0.16 27);
-  --danger-subtle: oklch(28% 0.06 27);
-  --success: oklch(72% 0.13 155);
-  --success-subtle: oklch(27% 0.05 155);
+  --accent-2: oklch(72% 0.19 285);
+  --accent-3: oklch(82% 0.17 75);
 
-  --ring: oklch(74% 0.12 245);
+  --danger: oklch(72% 0.17 27);
+  --danger-subtle: oklch(25% 0.07 27);
+  --success: oklch(82% 0.18 158);
+  --success-subtle: oklch(24% 0.07 158);
+
+  --ring: oklch(84% 0.19 162);
+
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
+  --shadow-md: 0 4px 20px oklch(0% 0 0 / 0.5);
+  --shadow-lg: 0 24px 64px oklch(0% 0 0 / 0.6), 0 8px 20px oklch(0% 0 0 / 0.4);
+
+  --grain-opacity: 0.05;
 }
 
 /*
- * Registers the semantic roles as Tailwind utilities: bg-surface, text-muted,
- * border-border and so on. `inline` keeps them referencing the live variable,
- * so a theme switch needs no class changes anywhere.
+ * Registers the semantic roles as Tailwind utilities. `inline` keeps them
+ * pointing at the live variable, so a theme switch needs no class changes.
  */
 @theme inline {
   --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
 
@@ -111,6 +157,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-fg: var(--accent-fg);
   --color-accent-subtle: var(--accent-subtle);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
 
   --color-danger: var(--danger);
   --color-danger-subtle: var(--danger-subtle);
@@ -119,48 +167,313 @@
 
   --color-ring: var(--ring);
 
-  --radius-card: 0.75rem;
-  --radius-control: 0.5rem;
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+  --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.04), 0 1px 3px oklch(0% 0 0 / 0.06);
-  --shadow-raised: 0 4px 12px oklch(0% 0 0 / 0.08), 0 2px 4px oklch(0% 0 0 / 0.04);
+  --shadow-card: var(--shadow-md);
+  --shadow-raised: var(--shadow-lg);
 
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI Variable Display', 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, monospace;
+
+  /* Motion. Expo-out for entrances, spring for anything that should feel physical. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Stops the sticky header shifting when a short page has no scrollbar. */
+    scrollbar-gutter: stable;
   }
 
-  /* D11: visible focus on every interactive element, not just on hover. */
+  /*
+   * A fine grain over the whole page. This is what stops large flat areas
+   * looking like plastic — it is one repeating SVG, inlined, so it costs no
+   * request and never repaints.
+   */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  h1,
+  h2,
+  h3 {
+    /* Tight tracking is most of what makes large type read as designed. */
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
   :focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    border-radius: 2px;
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 
-  /* Anchor targets clear the sticky header when navigating to a section. */
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  /* Native controls follow the theme rather than defaulting to light. */
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+@layer utilities {
+  /* --- Entrance motion ------------------------------------------------- */
+
+  /*
+   * Elements start hidden and are revealed by an IntersectionObserver adding
+   * [data-revealed]. `--i` staggers siblings without a timer per element.
+   */
+  /*
+   * Scoped to .js, which main.tsx sets. Without it the initial state would
+   * be opacity:0 for everyone — and a JavaScript failure would leave a
+   * permanently blank page rather than an unanimated one.
+   */
+  .js .reveal {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+    transition:
+      opacity 0.7s var(--ease-out-expo),
+      transform 0.7s var(--ease-out-expo);
+    transition-delay: calc(var(--i, 0) * 60ms);
+    will-change: transform, opacity;
+  }
+
+  .js .reveal[data-revealed] {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  .js .reveal-scale {
+    opacity: 0;
+    transform: scale(0.96) translate3d(0, 12px, 0);
+    transition:
+      opacity 0.6s var(--ease-out-expo),
+      transform 0.6s var(--ease-spring);
+    transition-delay: calc(var(--i, 0) * 60ms);
+  }
+
+  .js .reveal-scale[data-revealed] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* --- Surfaces --------------------------------------------------------- */
+
+  /* A hairline highlight along the top edge — reads as light catching glass. */
+  .edge-light {
+    position: relative;
+  }
+
+  .edge-light::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      160deg,
+      oklch(100% 0 0 / 0.14),
+      transparent 40%,
+      transparent 60%,
+      oklch(100% 0 0 / 0.04)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Ambient colour wash behind the hero. Purely decorative. */
+  .aurora {
+    position: absolute;
+    inset: -30% -10% auto -10%;
+    height: 60vh;
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.5;
+    background:
+      radial-gradient(40% 60% at 20% 40%, var(--accent-glow), transparent 70%),
+      radial-gradient(35% 55% at 75% 30%, oklch(60% 0.19 285 / 0.22), transparent 70%);
+    animation: drift 18s var(--ease-smooth) infinite alternate;
+  }
+
+  .text-gradient {
+    background: linear-gradient(120deg, var(--text) 30%, var(--accent) 75%, var(--accent-2));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: pan 8s var(--ease-smooth) infinite alternate;
+  }
+
+  /* --- Interaction ------------------------------------------------------ */
+
+  /* A light sweep across a control on hover. */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, oklch(100% 0 0 / 0.18), transparent);
+    transition: transform 0.7s var(--ease-out-expo);
+  }
+
+  .sheen:hover::after {
+    transform: translateX(100%);
+  }
+
+  .lift {
+    transition:
+      transform 0.35s var(--ease-spring),
+      box-shadow 0.35s var(--ease-out-expo),
+      border-color 0.35s var(--ease-smooth);
+  }
+
+  .lift:hover {
+    transform: translate3d(0, -4px, 0);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .press {
+    transition: transform 0.12s var(--ease-smooth);
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  /* Skips rendering work for offscreen sections without affecting the layout. */
+  .defer-paint {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(-4%, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4%, 3%, 0) scale(1.12);
+  }
+}
+
+@keyframes pan {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/*
+ * Honours the operating system's reduced-motion setting. Everything still
+ * arrives at its final state — nothing is left invisible.
+ */
+@media (prefers-reduced-motion: reduce) {
   html {
-    scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
+    scroll-behavior: auto;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
+  .reveal,
+  .reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Drives ScrollProgress where scroll-linked animations are supported. */
+@keyframes grow-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Page transition on route change. Short, because a slow one feels laggy. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

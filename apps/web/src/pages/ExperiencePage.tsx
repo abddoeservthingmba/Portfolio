@@ -1,4 +1,5 @@
 import { useAsync } from '@/lib/useAsync';
+import { useReveal } from '@/lib/useReveal';
 import { getExperience } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
@@ -8,6 +9,9 @@ import { ExperienceTimeline } from '@/features/experience/ExperienceTimeline';
 
 export function ExperiencePage() {
   const experience = useAsync(() => getExperience(), []);
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([experience.data]);
 
   useDocumentMeta({
     title: 'Experience',

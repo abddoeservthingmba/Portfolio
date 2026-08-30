@@ -1,4 +1,5 @@
 import { useAsync } from '@/lib/useAsync';
+import { useReveal } from '@/lib/useReveal';
 import { getResume } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
@@ -10,6 +11,9 @@ import { formatFullDate, toDateTimeAttribute } from '@/lib/format';
 
 export function ResumePage() {
   const resume = useAsync(() => getResume(), []);
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([resume.data]);
 
   useDocumentMeta({
     title: 'Resume',

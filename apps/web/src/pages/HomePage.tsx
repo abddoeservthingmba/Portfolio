@@ -1,37 +1,60 @@
 import { Link } from 'react-router';
 import { useAsync } from '@/lib/useAsync';
-import { getProjects, getSettings } from '@/lib/content';
+import { useReveal } from '@/lib/useReveal';
+import { getProjects, getSkills } from '@/lib/content';
+import { useSiteSettings } from '@/lib/useSiteSettings';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { AsyncSection, EmptyState } from '@/components/States';
-import { SkeletonCards, Skeleton } from '@/components/Skeleton';
+import { SkeletonCards } from '@/components/Skeleton';
 import { SectionHeading } from '@/components/PageHeader';
-import { buttonStyles } from '@/components/buttonStyles';
+import { Reveal } from '@/components/motion/Reveal';
 import { ProjectGrid } from '@/features/projects/ProjectGrid';
-import type { SiteSettings } from '@/types/content';
+import { Hero } from '@/features/home/Hero';
+import { SkillMarquee } from '@/features/home/SkillMarquee';
 
 export function HomePage() {
-  const settings = useAsync(() => getSettings(), []);
+  // Fetched once by RootLayout; sharing it keeps the header and hero in step.
+  const settings = useSiteSettings();
   const featured = useAsync(() => getProjects({ featured: true }), []);
+  const skills = useAsync(() => getSkills(), []);
+
+  // Rescan once each async section has rendered its content.
+  useReveal([settings, featured.data, skills.data]);
 
   useDocumentMeta({
     title: 'Portfolio',
     description:
-      settings.data?.tagline ?? 'Projects, experience, skills and certifications in one place.',
+      settings?.tagline ?? 'Projects, experience, skills and certifications in one place.',
   });
 
   return (
     <>
-      <Hero settings={settings.data} isLoading={settings.isLoading} />
+      <Hero settings={settings} isLoading={settings === null} />
 
-      <section className="mt-14">
-        <SectionHeading
-          title="Featured projects"
-          action={
-            <Link to="/projects" className="text-sm text-accent underline-offset-4 hover:underline">
-              All projects
-            </Link>
-          }
-        />
+      <section className="defer-paint mt-8">
+        <SkillMarquee skills={skills.data ?? []} />
+      </section>
+
+      <section className="defer-paint mt-20">
+        <Reveal>
+          <SectionHeading
+            title="Selected work"
+            action={
+              <Link
+                to="/projects"
+                className="group inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+              >
+                All projects
+                <span
+                  aria-hidden="true"
+                  className="transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:translate-x-1"
+                >
+                  →
+                </span>
+              </Link>
+            }
+          />
+        </Reveal>
 
         <AsyncSection
           isLoading={featured.isLoading}
@@ -50,46 +73,5 @@ export function HomePage() {
         </AsyncSection>
       </section>
     </>
-  );
-}
-
-/**
- * The hero renders its own structure immediately and fills in text as settings
- * arrive, rather than blocking the whole page on one request (C3 cold start).
- */
-function Hero({ settings, isLoading }: { settings: SiteSettings | null; isLoading: boolean }) {
-  if (isLoading) {
-    return (
-      <section className="space-y-4">
-        <Skeleton className="h-10 w-2/3" />
-        <Skeleton className="h-5 w-1/2" />
-        <Skeleton className="h-20 w-full max-w-prose" />
-      </section>
-    );
-  }
-
-  return (
-    <section>
-      <h1 className="text-3xl font-semibold tracking-tight text-text sm:text-4xl">
-        {settings?.siteTitle ?? 'Portfolio'}
-      </h1>
-
-      {settings?.tagline && <p className="mt-3 text-lg text-muted">{settings.tagline}</p>}
-
-      {settings?.bio && (
-        <p className="mt-5 max-w-prose text-sm leading-relaxed text-muted">
-          {settings.bio.split('\n\n')[0]}
-        </p>
-      )}
-
-      <div className="mt-7 flex flex-wrap gap-3">
-        <Link to="/projects" className={buttonStyles('primary')}>
-          View projects
-        </Link>
-        <Link to="/contact" className={buttonStyles('secondary')}>
-          Get in touch
-        </Link>
-      </div>
-    </section>
   );
 }

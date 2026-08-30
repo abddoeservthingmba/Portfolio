@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAsync } from '@/lib/useAsync';
+import { useReveal } from '@/lib/useReveal';
 import { getProjects, getSkills } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
@@ -44,6 +45,9 @@ export function ProjectsPage() {
       }),
     [debouncedSearch, skillId],
   );
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([projects.data]);
 
   useDocumentMeta({
     title: 'Projects',

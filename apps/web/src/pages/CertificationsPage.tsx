@@ -1,4 +1,5 @@
 import { useAsync } from '@/lib/useAsync';
+import { useReveal } from '@/lib/useReveal';
 import { getCertifications } from '@/lib/content';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
@@ -8,6 +9,9 @@ import { CertificationCard } from '@/features/certifications/CertificationCard';
 
 export function CertificationsPage() {
   const certifications = useAsync(() => getCertifications(), []);
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([certifications.data]);
 
   useDocumentMeta({
     title: 'Certifications',

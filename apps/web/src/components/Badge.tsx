@@ -5,7 +5,7 @@ type Tone = 'neutral' | 'accent';
 
 const TONES: Record<Tone, string> = {
   neutral: 'border-border bg-surface-raised text-muted',
-  accent: 'border-transparent bg-accent-subtle text-accent',
+  accent: 'border-accent/25 bg-accent-subtle text-accent',
 };
 
 /** A small inline label — skill tags, project status, credential ids. */
@@ -21,7 +21,8 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center rounded-pill border px-2.5 py-1 text-xs font-medium',
+        'transition-colors duration-300',
         TONES[tone],
         className,
       )}

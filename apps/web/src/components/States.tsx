@@ -7,7 +7,7 @@ import { Button } from './Button';
  */
 export function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="rounded-card border border-dashed border-border bg-surface px-6 py-12 text-center">
+    <div className="rounded-card border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
       <p className="text-sm font-medium text-text">{title}</p>
       <p className="mx-auto mt-1 max-w-prose text-sm text-muted">{description}</p>
     </div>

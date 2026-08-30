@@ -11,6 +11,7 @@
     <script>
       // Applies the stored theme before first paint so the page never flashes
       // the wrong palette. Kept inline and tiny for that reason.
+      document.documentElement.classList.add('js');
       try {
         var stored = localStorage.getItem('theme');
         if (stored === 'light' || stored === 'dark') {

@@ -1,12 +1,15 @@
-import { useAsync } from '@/lib/useAsync';
-import { getSettings } from '@/lib/content';
+import { useReveal } from '@/lib/useReveal';
+import { useSiteSettings } from '@/lib/useSiteSettings';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { PageHeader } from '@/components/PageHeader';
 import { Card } from '@/components/Card';
 import { ContactForm } from '@/features/contact/ContactForm';
 
 export function ContactPage() {
-  const { data: settings } = useAsync(() => getSettings(), []);
+  const settings = useSiteSettings();
+
+  // Rescan for reveal targets once the async content has rendered.
+  useReveal([settings]);
 
   useDocumentMeta({
     title: 'Contact',
