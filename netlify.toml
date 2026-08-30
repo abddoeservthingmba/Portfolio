@@ -1,0 +1,83 @@
+# Netlify configuration for the public site (Phase 7).
+#
+# The site is a static bundle on a CDN, deliberately decoupled from the API:
+# it stays served even while the API restarts or cold-starts (C1).
+
+[build]
+  base = "."
+  command = "pnpm install --frozen-lockfile && pnpm --filter @portfolio-cms/web build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Netlify needs to be told to use pnpm rather than inferring npm.
+  NPM_FLAGS = "--version"
+
+# --- Crawler files ----------------------------------------------------------
+# Rewritten (200, not redirected) onto this domain so crawlers see them here
+# rather than on the API's host. Generated from live content, because project
+# slugs change through the admin portal with no redeploy.
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "https://YOUR-API.onrender.com/api/v1/sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "https://YOUR-API.onrender.com/api/v1/robots.txt"
+  status = 200
+  force = true
+
+# --- SPA fallback -----------------------------------------------------------
+# Must be last: a client-rendered app needs index.html for any path the CDN has
+# no file for, or a deep link like /projects/portfolio-cms 404s on refresh.
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# --- Security headers -------------------------------------------------------
+
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+    # The bundle carries no inline scripts, so script-src needs no 'unsafe-inline'.
+    # 'unsafe-inline' remains on style-src because the design sets CSS custom
+    # properties inline for the tilt and stagger effects.
+    #
+    # connect-src must list the API and Supabase, or every request is blocked.
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: blob: https://YOUR-PROJECT.supabase.co;
+      font-src 'self' data:;
+      connect-src 'self' https://YOUR-API.onrender.com https://YOUR-PROJECT.supabase.co;
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self'
+    """
+
+# Hashed filenames are immutable, so they can be cached indefinitely.
+[[headers]]
+  for = "/assets/*"
+
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# index.html must never be cached, or a deploy does not reach anyone.
+[[headers]]
+  for = "/index.html"
+
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

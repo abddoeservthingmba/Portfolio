@@ -4,6 +4,7 @@ import { publicWriteRateLimit } from '../middleware/rateLimit.js';
 import * as controller from '../controllers/content.controller.js';
 import * as contactController from '../controllers/contact.controller.js';
 import { contactSchema } from '../schemas/contact.schemas.js';
+import * as seoController from '../controllers/seo.controller.js';
 import {
   projectQuerySchema,
   projectSlugSchema,
@@ -27,6 +28,11 @@ contentRoutes.get('/certifications', controller.listCertifications);
 contentRoutes.get('/education', controller.listEducation);
 contentRoutes.get('/resume', controller.getResume);
 contentRoutes.get('/settings', controller.getSettings);
+
+// Crawler files, generated from live content and rewritten onto the site's
+// own domain by the CDN (see netlify.toml).
+contentRoutes.get('/sitemap.xml', seoController.sitemap);
+contentRoutes.get('/robots.txt', seoController.robots);
 
 /**
  * The one exception to "every public route is a GET": the contact endpoint,

@@ -13,14 +13,14 @@ Built against **Portfolio CMS Program Blueprint v1.0**. Section references below
 | 0 — Requirements lock       | ✅ Done         | Styling locked to Tailwind CSS with hand-rolled primitives |
 | 1 — Foundation              | ✅ Done         | Monorepo, strict TS, ESLint/Prettier, CI, health endpoint  |
 | 2 — Public static MVP       | ✅ Done         | All nine public routes, responsive, on mock data           |
-| 3 — Database and public API | ⬜ Next         | Needs a Supabase project                                   |
-| 4 — Admin CMS               | ⬜ Not started  |                                                            |
-| 5 — Assets and contact      | ⬜ Not started  |                                                            |
-| 6 — Production hardening    | ⬜ Not started  |                                                            |
-| 7 — Deployment              | ⬜ Not started  |                                                            |
+| 3 — Database and public API | ✅ Done         | Live on Supabase PostgreSQL 17, real content seeded        |
+| 4 — Admin CMS               | ✅ Done         | JWKS auth, guards, CRUD for every entity                   |
+| 5 — Assets and contact      | ✅ Done         | Uploads with type sniffing, contact endpoint, admin inbox  |
+| 6 — Production hardening    | 🟡 Mostly      | See the checklist below for what is outstanding            |
+| 7 — Deployment              | 🟡 Configured  | netlify.toml and render.yaml ready; not yet deployed       |
 | 8 — Portfolio polish        | ⬜ Not started  |                                                            |
 
-The public site currently runs on mock data. Everything it renders comes through `apps/web/src/lib/content.ts`, which mirrors the D4 API contract — Phase 3 replaces those function bodies with fetch calls and deletes `apps/web/src/mocks/`. No page or component changes.
+The site runs on live data from Supabase. Content is managed entirely through the admin portal at `/admin` — no redeploy is needed to publish a project, add a certification or replace the resume.
 
 ---
 
@@ -168,6 +168,7 @@ Names only. No value, key or secret appears in this repository. Development and 
 | `NODE_ENV`                              | Controls logging verbosity and error detail                      |
 | `PORT`                                  | Listening port supplied by the host                              |
 | `ALLOWED_ORIGINS`                       | Comma-separated CORS allow-list. No wildcard, in any environment |
+| `PUBLIC_SITE_URL`                       | The public site origin, for absolute sitemap URLs                |
 | `RATE_LIMIT_WINDOW` / `RATE_LIMIT_MAX`  | Throttle window and ceiling for public write routes              |
 | `MAX_UPLOAD_BYTES`                      | Upload ceiling, enforced server-side                             |
 | `DATABASE_URL`                          | Pooled PostgreSQL connection used by Prisma                      |
@@ -235,15 +236,131 @@ These are decisions, not omissions. They keep the build finishable.
 
 ---
 
-## Next: Phase 3
+## Deployment
 
-Requires a Supabase project. The exit gate is hard — nothing downstream starts until it is met.
+Two independent deployments over one database. The site stays served from a CDN even while the API restarts or cold-starts, and either can be rolled back without touching the other.
 
-1. Create the Supabase project; put the connection string, endpoint and keys straight into `apps/api/.env`, never the repository.
-2. Write `prisma/schema.prisma` against the D3 model, then the first migration and a seed script.
-3. Build the public read endpoints under `/api/v1`, with the OpenAPI description written **alongside** the routes in the same pull request — never reconstructed afterwards.
-4. Replace the function bodies in `apps/web/src/lib/content.ts` with typed fetch calls.
-5. Delete `apps/web/src/mocks/`. Deleted, not bypassed — that is the M3 gate.
+```
+Netlify (static bundle)  ──JSON, CORS allow-list──>  Render (Express)  ──>  Supabase
+```
+
+Configuration lives in `netlify.toml` and `render.yaml`. Neither contains a secret: every credential is marked `sync: false`, so the host prompts for it once and stores it.
+
+### Before the first deploy
+
+Three placeholders in `netlify.toml` must be replaced with the real hostnames — search for `YOUR-API` and `YOUR-PROJECT`. They appear in the sitemap rewrites and in the Content-Security-Policy, and a wrong value there silently blocks every API call the browser makes.
+
+### 1. API on Render
+
+1. **New → Blueprint**, point it at this repository. Render reads `render.yaml`.
+2. Fill in the prompted secrets. They are the same values as `apps/api/.env`:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | Supabase transaction pooler, port 6543, with `?pgbouncer=true&connection_limit=1` |
+   | `DIRECT_URL` | Supabase session pooler, port 5432 |
+   | `SUPABASE_URL` | The project URL |
+   | `SUPABASE_SERVICE_ROLE_KEY` | **Secret.** Server-side only |
+   | `SUPABASE_JWT_SECRET` | Only needed if the project ever moves to symmetric signing |
+   | `ALLOWED_ORIGINS` | The exact Netlify origin, e.g. `https://yoursite.netlify.app`. No wildcard, no trailing slash |
+   | `PUBLIC_SITE_URL` | The same origin. Used to build absolute sitemap URLs |
+
+3. Deploy. `startCommand` runs `prisma migrate deploy` before the server accepts traffic, so the schema is never behind the code that expects it. `migrate deploy` applies committed migrations only — it never generates one and never prompts.
+
+### 2. Site on Netlify
+
+1. **Add new site → Import an existing project**, point it at this repository. Netlify reads `netlify.toml`.
+2. Set the build environment variables:
+
+   | Variable | Value |
+   | --- | --- |
+   | `VITE_API_BASE_URL` | `https://your-api.onrender.com/api/v1` |
+   | `VITE_SUPABASE_URL` | The Supabase project URL |
+   | `VITE_SUPABASE_ANON_KEY` | The anon key — the only Supabase key that may reach a browser |
+
+3. Deploy, then go back to Render and set `ALLOWED_ORIGINS` and `PUBLIC_SITE_URL` to the real Netlify origin.
+
+### 3. Verify
+
+```bash
+curl https://your-api.onrender.com/api/v1/health     # database: "ok"
+curl https://yoursite.netlify.app/sitemap.xml        # rewritten to the API
+curl https://yoursite.netlify.app/robots.txt         # Sitemap line matches the site
+```
+
+Then, by hand: load the site, open a project, sign in at `/admin`, edit something, and confirm it appears publicly.
+
+### Cold starts
+
+The API sleeps on Render's free tier, so the first request after an idle period takes several seconds. That is a design input, not a fault (A6): the site renders its shell and skeletons without waiting on the API, and `/health` is a cheap way to warm the service.
+
+---
+
+## Rollback
+
+Written down before it is needed, and rehearsed once during Phase 7. **Migrations are the part that does not roll back automatically**, which is why the migration rule below exists.
+
+1. **Revert the offending commit on `main`.** Both hosts redeploy from source, restoring the previous build.
+   ```bash
+   git revert <sha> && git push origin main
+   ```
+2. **If only the site is affected**, redeploy the previous successful build directly from the Netlify dashboard (Deploys → the last good one → Publish deploy) while the revert makes its way through. That is faster than a rebuild.
+3. **Confirm before declaring it done:** `/health` responds, one public page loads, and one admin edit saves.
+
+### The migration rule
+
+Write migrations to be additive wherever possible: add a column before you stop writing the old one, and drop the old one in a later release. A migration that destroys data cannot be undone by reverting a commit, so **a destructive migration should be the only thing in its release**.
+
+### Backup and restore
+
+Supabase takes automatic backups on paid plans; on the free plan, take a manual dump before any destructive migration:
+
+```bash
+# Uses DIRECT_URL (port 5432) — the transaction pooler cannot stream a dump.
+pg_dump "$DIRECT_URL" --no-owner --no-privileges -Fc -f backup.dump
+pg_restore -d "$DIRECT_URL" --no-owner --clean backup.dump
+```
+
+Storage objects are not covered by a database dump. The buckets hold uploaded images, certificates and resumes, and must be exported separately from the Supabase dashboard.
+
+---
+
+## Production readiness
+
+The blueprint's release gate (Appendix B). Verified means checked, not assumed.
+
+### Passing
+
+- No secret, credential or token anywhere in version control, **including history** — verified by scanning every commit
+- Environment sets separate per environment; `.env` ignored from the first commit
+- The service-role key exists only in the API's environment and carries no client build prefix
+- CORS restricted to an exact origin, no wildcard anywhere
+- Every mutation route has an automated test proving it rejects an unauthenticated request — 43 of them, enumerated from the route table
+- A forged `alg: none` token is rejected; the verification algorithm is pinned
+- Uploads enforce server-side type sniffing, per-entity size caps and generated storage paths
+- The contact endpoint is rate limited and returns a `Retry-After` header
+- No response body carries a stack trace, driver message or configuration value
+- Security headers on both surfaces; CSP, HSTS and frame-ancestors on the site
+- Typecheck, lint, format check and 115 tests pass
+- Mock data deleted, not bypassed
+- A failed API call renders an error state with navigation intact
+- Unique titles, descriptions and Open Graph tags per route
+- Sitemap and robots generated from live content, rewritten onto the site's domain
+- Non-critical images lazy-loaded; the admin surface is a separate chunk
+- The OpenAPI description matches the deployed routes — enforced by a test that fails when a route is undocumented
+
+### Outstanding
+
+| Gap | Why it is still open |
+| --- | --- |
+| No test proves a **valid non-admin** token is rejected | Needs a real second Supabase identity. The code path is separate from the 401 path and is currently only covered by inspection |
+| CRUD success paths are untested | The suite deliberately runs without a database. Covering these needs a test database and a fixture reset between cases |
+| No performance audit recorded | Run Lighthouse against the deployed site and record the result |
+| Keyboard and contrast pass not formally recorded | Focus styles, labels and semantics are in place; the walkthrough has not been done and signed off |
+| Rollback not yet rehearsed | Cannot be rehearsed before the first deploy |
+| Provider quotas not verified | Check current Supabase, Render and Netlify limits at launch and record them here |
+
+None of these block a first deploy. All of them block calling the release gate passed.
 
 ---
 

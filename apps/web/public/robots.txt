@@ -1,7 +1,13 @@
+# Fallback only.
+#
+# In production, netlify.toml rewrites /robots.txt to the API, which generates
+# it with the correct Sitemap URL for the deployed domain. This static copy is
+# what gets served if that rewrite is ever removed, so it stays safe rather
+# than accurate — it withholds the admin portal without naming a sitemap that
+# may not exist at that address.
+
 User-agent: *
 Allow: /
 
 # The admin portal is not public content and must never be indexed.
 Disallow: /admin
-
-Sitemap: https://example.com/sitemap.xml

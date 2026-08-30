@@ -27,6 +27,7 @@ servers:
 tags:
   - name: Operations
   - name: Content
+  - name: Admin
 
 paths:
   /health:
@@ -224,7 +225,509 @@ paths:
                   - properties:
                       data: { $ref: '#/components/schemas/Settings' }
 
+  # --- Public write and crawler files ---------------------------------------
+
+  /contact:
+    post:
+      tags: [Content]
+      summary: Submit a contact message
+      description: |
+        The only route where an anonymous visitor causes a write, and therefore
+        the only public route carrying a rate limit.
+
+        `company` is a honeypot and `dwellMs` is how long the form was on
+        screen. Both are bot heuristics judged server-side, and both fail
+        silently — a submission that trips one gets the same 201 a real
+        submission gets, and is simply not stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, subject, message]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 100 }
+                email: { type: string, format: email, maxLength: 254 }
+                subject: { type: string, minLength: 3, maxLength: 150 }
+                message: { type: string, minLength: 20, maxLength: 2000 }
+                company:
+                  type: string
+                  description: Honeypot. A real submission leaves this empty.
+                dwellMs:
+                  type: integer
+                  description: Milliseconds the form was on screen before submitting.
+      responses:
+        '201':
+          description: Received. Says nothing about whether it was stored.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          received: { type: boolean }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429':
+          description: Rate limited. Carries a Retry-After header.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+  /sitemap.xml:
+    get:
+      tags: [Operations]
+      summary: Sitemap, generated from live content
+      description: |
+        Returns XML, not the standard envelope — crawlers expect exactly the
+        documented format. Generated at request time because project slugs
+        change through the admin portal with no redeploy.
+      responses:
+        '200':
+          description: Sitemap
+          content:
+            application/xml:
+              schema: { type: string }
+
+  /robots.txt:
+    get:
+      tags: [Operations]
+      summary: robots.txt, with the Sitemap line matching the deployed domain
+      responses:
+        '200':
+          description: robots.txt
+          content:
+            text/plain:
+              schema: { type: string }
+
+  # --- Administrator ---------------------------------------------------------
+  # Every route below requires a bearer token belonging to the administrator.
+  # Authorisation runs before validation, so an unauthorised caller learns
+  # nothing about the shape of a valid payload (C4).
+
+  /admin/session:
+    get:
+      tags: [Admin]
+      summary: Confirm the caller is a recognised administrator
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: The administrator
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          id: { type: string, format: uuid }
+                          email: { type: [string, 'null'] }
+                          role: { type: string, enum: [admin] }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/skill-options:
+    get:
+      tags: [Admin]
+      summary: Skills, for the project form's picker
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Skills
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Skill' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/projects:
+    get:
+      tags: [Admin]
+      summary: List every project, including drafts and archived
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Projects
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/Project' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      tags: [Admin]
+      summary: Create a project
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectWrite' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Project' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/projects/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Admin]
+      summary: Get one project by id
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: The project
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Project' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin]
+      summary: Update a project
+      description: |
+        `skillIds` replaces the whole tag set; omitting it leaves the tags
+        alone. The row and its join rows are reconciled in one transaction, so
+        a partial failure cannot leave the tags wrong with no error shown.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectWrite' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/Project' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete a project
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/skills:
+    post:
+      tags: [Admin]
+      summary: Create a skill
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/skills/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Update a skill
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete a skill
+      description: Removes it from every project that used it; the projects remain.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/experience:
+    post:
+      tags: [Admin]
+      summary: Create an experience entry
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/experience/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Update an experience entry
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete an experience entry
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/certifications:
+    post:
+      tags: [Admin]
+      summary: Create a certification
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/certifications/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Update a certification
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete a certification
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/education:
+    post:
+      tags: [Admin]
+      summary: Create an education record
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/education/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Update an education record
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete an education record
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/resume:
+    get:
+      tags: [Admin]
+      summary: List every resume version
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Versions, active first }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      tags: [Admin]
+      summary: Register a resume version
+      description: |
+        Activating a version deactivates the previous one, atomically. Exactly
+        one version is active at any time — enforced in the service layer,
+        because the swap must be atomic and a constraint cannot express that.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/resume/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Rename or activate a resume version
+      description: |
+        The active version cannot be deactivated directly — activating another
+        is how you switch, so the public page always has something to serve.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete a resume version
+      description: The active version cannot be deleted.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/settings:
+    patch:
+      tags: [Admin]
+      summary: Update site settings
+      description: Creates the singleton row on first use rather than 404ing.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/uploads:
+    post:
+      tags: [Admin]
+      summary: Upload an asset
+      description: |
+        Multipart. The declared content type is a hint only — the server sniffs
+        the actual bytes and rejects anything outside the allow-list for that
+        kind. The filename is never trusted: the storage path is generated
+        server-side as kind/uuid.ext.
+
+        `previousPath` lets the server delete the replaced object, but only
+        after the new path is committed — so a failure leaves a stale file
+        rather than a broken reference.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [kind, file]
+              properties:
+                kind: { type: string, enum: [image, certificate, resume] }
+                file: { type: string, format: binary }
+                previousPath: { type: string }
+      responses:
+        '201':
+          description: Stored
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - properties:
+                      data: { $ref: '#/components/schemas/UploadResult' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '413': { description: Above the size cap for that kind }
+        '415': { description: Sniffed type is outside the allow-list }
+
+  /admin/uploads/limits:
+    get:
+      tags: [Admin]
+      summary: Accepted types and size caps, so the client can pre-check
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Limits per asset kind }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/messages:
+    get:
+      tags: [Admin]
+      summary: The contact inbox
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [UNREAD, READ, ARCHIVED] }
+      responses:
+        '200': { description: Messages, newest first }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /admin/messages/unread-count:
+    get:
+      tags: [Admin]
+      summary: Number of unread messages
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: The count }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /admin/messages/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    patch:
+      tags: [Admin]
+      summary: Mark a message read or archived
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Admin]
+      summary: Delete a message
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        A Supabase access token. Verified locally against the project JWKS with
+        the algorithm pinned to ES256 — the API holds no key capable of forging
+        one. A valid token is not access: the caller must also hold the
+        administrator row, or the response is 403 rather than 401.
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
   schemas:
     Meta:
       type: object
@@ -395,9 +898,66 @@ components:
               label: { type: string }
               url: { type: string }
 
+    ProjectWrite:
+      type: object
+      description: |
+        Create requires title and slug. Update accepts any subset but must
+        carry at least one field. Unknown properties are rejected rather than
+        ignored, so a typo in a client is visible instead of silent.
+      properties:
+        title: { type: string, minLength: 2, maxLength: 150 }
+        slug:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          maxLength: 200
+        shortDescription: { type: [string, 'null'], maxLength: 300 }
+        description: { type: [string, 'null'], maxLength: 20000 }
+        status: { type: string, enum: [DRAFT, PUBLISHED, ARCHIVED] }
+        repoUrl: { type: [string, 'null'] }
+        liveUrl: { type: [string, 'null'] }
+        imagePath: { type: [string, 'null'] }
+        featured: { type: boolean }
+        skillIds:
+          type: array
+          maxItems: 30
+          items: { type: string, format: uuid }
+          description: Replaces the whole tag set. Omit to leave tags unchanged.
+
+    UploadResult:
+      type: object
+      required: [kind, path, url, contentType, bytes]
+      properties:
+        kind: { type: string, enum: [image, certificate, resume] }
+        path:
+          type: string
+          description: Server-generated storage path. This is what goes in the database.
+        url: { type: [string, 'null'] }
+        contentType:
+          type: string
+          description: The sniffed type, not the declared one.
+        bytes: { type: integer }
+
   responses:
     NotFound:
       description: No resource at that identifier or slug
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    Unauthenticated:
+      description: Missing, malformed or expired token
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    Forbidden:
+      description: A valid token whose holder is not the administrator
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+
+    Conflict:
+      description: Uniqueness conflict, typically a duplicate slug
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorEnvelope' }

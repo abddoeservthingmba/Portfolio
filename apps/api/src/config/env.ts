@@ -34,6 +34,10 @@ const envSchema = z.object({
   // Comma-separated CORS allow-list. No wildcard is accepted at any point (D5).
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
 
+  // The public site's own origin, used to build absolute URLs in the sitemap.
+  // Not the API's origin — crawlers must be sent to the site, not here.
+  PUBLIC_SITE_URL: z.string().default('http://localhost:5173'),
+
   // Public write routes (the contact endpoint) — window in ms, ceiling per window.
   RATE_LIMIT_WINDOW: z.coerce
     .number()
