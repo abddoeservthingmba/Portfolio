@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm --filter \"./apps/*\" test",
-    "start": "cd apps/api && npx --no-install prisma migrate deploy && node dist/index.js"
+    "start": "node apps/api/dist/index.js"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createApp, API_PREFIX } from '../src/app.js';
 
@@ -143,3 +143,30 @@ function forgedNoneToken(): string {
 
   return `${header}.${payload}.`;
 }
+
+describe('ADMIN_AUTH_BYPASS cannot open the deployed API', () => {
+  it('is off by default, so the guard holds with no configuration', async () => {
+    const response = await request(app).patch(`${API_PREFIX}/admin/settings`).send({});
+    expect(response.status).toBe(401);
+  });
+
+  it.each(['production', 'test'])('is ignored when NODE_ENV is %s', async (nodeEnv) => {
+    // The bypass is allow-listed to development. Anywhere else it must lose:
+    // in production because a stranger could delete the portfolio, and under
+    // test because an always-open guard makes the whole auth suite vacuous.
+    vi.resetModules();
+    vi.stubEnv('NODE_ENV', nodeEnv);
+    vi.stubEnv('ADMIN_AUTH_BYPASS', 'true');
+
+    const { createApp: createProdApp, API_PREFIX: prefix } = await import('../src/app.js');
+    const prodApp = createProdApp();
+
+    const response = await request(prodApp).patch(`${prefix}/admin/settings`).send({});
+
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe('UNAUTHENTICATED');
+
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+});

@@ -1,4 +1,5 @@
 import type { RequestHandler } from 'express';
+import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import { readBearerToken, verifyAccessToken, TokenError } from '../lib/auth.js';
 import { forbidden, unauthenticated } from '../lib/errors.js';
@@ -20,6 +21,12 @@ import { logger } from '../lib/logger.js';
  * the shape of a valid payload.
  */
 export const requireAuth: RequestHandler = async (req, res, next) => {
+  if (isBypassActive()) {
+    res.locals.actor = { id: 'local-bypass', authUserId: 'local-bypass', email: 'local@bypass' };
+    next();
+    return;
+  }
+
   const token = readBearerToken(req.get('authorization'));
 
   if (!token) {
@@ -65,3 +72,32 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Whether the admin auth check is being skipped.
+ *
+ * Two conditions, and production overrides the flag rather than obeying it.
+ * The deployed API is reachable by anyone, so an unauthenticated mutation
+ * route there means a stranger can delete every project, empty the contact
+ * inbox and write to the storage buckets. No configuration value should be
+ * able to arrange that by accident, so this fails closed.
+ *
+ * A production process that has the flag set is misconfigured, and says so
+ * loudly on every guarded request rather than failing silently.
+ */
+function isBypassActive(): boolean {
+  if (!env.ADMIN_AUTH_BYPASS) return false;
+
+  // Allow-listed to development, rather than merely excluding production.
+  // Under `test` the suite must exercise the real guard: with the bypass on,
+  // the 43 tests asserting that mutation routes reject an unauthenticated
+  // caller would all pass while proving nothing.
+  if (env.NODE_ENV !== 'development') {
+    logger.error(`ADMIN_AUTH_BYPASS is set under NODE_ENV=${env.NODE_ENV} and is being ignored`, {
+      action: 'The bypass is honoured in development only. Remove this variable.',
+    });
+    return false;
+  }
+
+  return true;
+}

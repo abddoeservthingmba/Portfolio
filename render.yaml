@@ -27,15 +27,17 @@ services:
       pnpm install --frozen-lockfile &&
       pnpm --filter @portfolio-cms/api build
 
-    # Migrations run before the server accepts traffic, so the schema is never
-    # behind the code that expects it. `migrate deploy` applies committed
-    # migrations only — it never generates one, and never prompts.
+    # Migrations are NOT run here. They need DIRECT_URL, a credential whose
+    # only purpose is changing the schema — requiring it to boot means the
+    # server cannot start without it. Run migrations deliberately instead:
+    #
+    #   pnpm --filter @portfolio-cms/api db:deploy
+    #
+    # from a machine that has DIRECT_URL, before deploying code that needs the
+    # new shape. Additive migrations make that ordering safe (see README).
     # Depends on npm and node only. pnpm may not be on PATH at runtime, and
     # yarn refuses to run at all while packageManager names pnpm.
-    startCommand: >-
-      cd apps/api &&
-      npx --no-install prisma migrate deploy &&
-      node dist/index.js
+    startCommand: node apps/api/dist/index.js
 
     healthCheckPath: /api/v1/health
 

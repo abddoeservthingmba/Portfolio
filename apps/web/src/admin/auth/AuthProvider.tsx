@@ -17,9 +17,19 @@ import { AuthContext, type AuthState, type AuthStatus } from './AuthContext';
  * perfectly valid session for this Supabase project without being the
  * administrator, and the UI must say so rather than showing an empty portal.
  */
+/**
+ * Mirrors the API's ADMIN_AUTH_BYPASS, for local use without signing in.
+ *
+ * Vite inlines this at build time, so a production bundle cannot pick it up
+ * unless someone deliberately builds with it — and even then the server
+ * refuses to honour the bypass outside development, so the portal would load
+ * and every save would come back 401.
+ */
+const BYPASS = import.meta.env.VITE_ADMIN_AUTH_BYPASS === 'true';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>('loading');
-  const [email, setEmail] = useState<string | null>(null);
+  const [status, setStatus] = useState<AuthStatus>(BYPASS ? 'signed-in' : 'loading');
+  const [email, setEmail] = useState<string | null>(BYPASS ? 'local bypass' : null);
 
   /** Asks the API whether the current token belongs to an administrator. */
   const confirmAdmin = useCallback(async () => {
@@ -39,6 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // With the bypass on there is no session to read and nothing to subscribe
+    // to — the portal is already usable.
+    if (BYPASS) return;
+
     let active = true;
 
     supabase.auth.getSession().then(({ data }) => {

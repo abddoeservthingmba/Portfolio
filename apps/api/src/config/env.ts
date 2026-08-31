@@ -52,6 +52,20 @@ const envSchema = z.object({
     .positive()
     .default(5 * 1024 * 1024),
 
+  /**
+   * Skips the admin auth check so the portal can be used without signing in.
+   *
+   * Honoured ONLY outside production — see requireAuth. The deployed API is
+   * reachable by anyone on the internet, so an unauthenticated mutation route
+   * there is not a convenience: it is a way for a stranger to delete the
+   * portfolio, read the contact inbox and write to the storage buckets. This
+   * flag is deliberately incapable of doing that.
+   */
+  ADMIN_AUTH_BYPASS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+
   DATABASE_URL: z.string().optional(),
   DIRECT_URL: z.string().optional(),
   SUPABASE_URL: z.string().optional(),
