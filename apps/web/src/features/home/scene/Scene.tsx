@@ -45,7 +45,7 @@ export default function Scene() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
 
-    let parts: SceneParts = createScene(window.innerWidth, window.innerHeight);
+    let parts: SceneParts = createScene(window.innerWidth, window.innerHeight, renderer);
 
     // Targets are what input writes to; the rendered values chase them, which is
     // what turns a jumpy scroll position into a glide.
@@ -76,7 +76,7 @@ export default function Scene() {
      */
     const onThemeChange = () => {
       parts.dispose();
-      parts = createScene(window.innerWidth, window.innerHeight);
+      parts = createScene(window.innerWidth, window.innerHeight, renderer);
       parts.camera.aspect = window.innerWidth / window.innerHeight;
       parts.camera.updateProjectionMatrix();
     };
@@ -125,6 +125,21 @@ export default function Scene() {
       parts.camera.position.x = current.pointerX * POINTER_LEAN;
       parts.camera.position.y = -current.pointerY * POINTER_LEAN * 0.6;
       parts.camera.lookAt(0, 0, parts.camera.position.z - 10);
+
+      /*
+       * The hero. A slow constant turn so the facets keep catching the
+       * environment, plus a lean toward the pointer — which is what makes it
+       * feel like an object in a space rather than a looping animation.
+       *
+       * The lean is added to the spin rather than assigned, so following the
+       * cursor never fights the rotation for control of the same axis.
+       */
+      parts.hero.spin.rotation.y += 0.16 * delta;
+      parts.hero.spin.rotation.x = -current.pointerY * 0.22;
+      parts.hero.spin.rotation.z = current.pointerX * 0.12;
+      // Breathes, so it is never perfectly still even with the pointer parked.
+      // On the root, so the glow rises with the shards rather than staying put.
+      parts.hero.root.position.y = 0.2 + Math.sin(elapsed * 0.6) * 0.22;
 
       for (const shape of parts.shapes) {
         shape.mesh.rotation.x += shape.spin.x * delta;

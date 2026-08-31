@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createEnvironment } from './createEnvironment';
+import { createHero } from './createHero';
 
 /**
  * Builds the scene graph. No React, no lifecycle, no animation loop — those
@@ -12,7 +14,12 @@ import * as THREE from 'three';
  * same family of object as the cards.
  */
 
-const COUNT = 34;
+/*
+ * Cut back hard when the hero object arrived. Thirty-four shapes were the whole
+ * composition; now they are the depth *behind* a subject, and at the old count
+ * they competed with it instead of supporting it.
+ */
+const COUNT = 15;
 
 /** Speed lines. Enough to fill the frame at speed, few enough to vanish at rest. */
 const STREAK_COUNT = 26;
@@ -23,6 +30,8 @@ export const TRAVEL_DEPTH = 62;
 export interface SceneParts {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
+  /** The centrepiece: `root` positions it, `spin` is what rotates. */
+  hero: { root: THREE.Group; spin: THREE.Group };
   /** Every shape, with the per-object drift values the loop needs. */
   shapes: Shape[];
   /** Speed lines. The loop moves them and fades them with scroll velocity. */
@@ -125,7 +134,11 @@ function createGeometries(): THREE.BufferGeometry[] {
   ];
 }
 
-export function createScene(width: number, height: number): SceneParts {
+export function createScene(
+  width: number,
+  height: number,
+  renderer: THREE.WebGLRenderer,
+): SceneParts {
   const scene = new THREE.Scene();
 
   const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 140);
@@ -156,6 +169,36 @@ export function createScene(width: number, height: number): SceneParts {
   // The last entry is the background; the rest are the shape colours.
   const background = palette[palette.length - 1]!;
   const colors = palette.slice(0, -1);
+
+  /*
+   * Reflections for the hero. Warm above, the page's own background at the
+   * horizon, cool below — so the crystal picks up the site's palette rather
+   * than looking like it was pasted in from a different render.
+   */
+  const environment = createEnvironment(renderer, colors[1]!, background, colors[2]!);
+  scene.environment = environment.texture;
+
+  const hero = createHero(colors[0]!, colors[1]!, environment.texture);
+
+  /*
+   * Off to the right, and sized to sit *inside* the frame.
+   *
+   * The content column is left-aligned, so this is the empty half — but the
+   * numbers are not free choices. At the camera's start the visible half width
+   * is about 7.4 world units, and the cluster's own radius is about 2.2 once
+   * scaled; placing it at 4.8 puts its far edge at 7.0, just inside the frame
+   * edge. Larger or further right and it crops, which turns a composed object
+   * back into wallpaper.
+   */
+  hero.root.position.set(4.8, 0.2, 2);
+  hero.root.scale.setScalar(0.75);
+  scene.add(hero.root);
+
+  // A dedicated key on the hero's side. The scene lights are set for the flat
+  // toon shapes, which need far less than a polished surface does to sparkle.
+  const heroKey = new THREE.DirectionalLight(0xffffff, 2.4);
+  heroKey.position.set(9, 6, 9);
+  scene.add(heroKey);
 
   /*
    * Fog, in the page's own background colour, so far shapes dissolve into it.
@@ -286,8 +329,11 @@ export function createScene(width: number, height: number): SceneParts {
     streakGeometry.dispose();
     streakMaterial.dispose();
     gradient.dispose();
+    hero.dispose();
+    environment.dispose();
+    scene.environment = null;
     scene.clear();
   };
 
-  return { scene, camera, shapes, streaks, streakMaterial, dispose };
+  return { scene, camera, hero, shapes, streaks, streakMaterial, dispose };
 }

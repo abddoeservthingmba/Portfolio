@@ -239,6 +239,31 @@ to reach it.
 | `features/home/scene/useSceneCapability.ts` | Decides whether 3D runs at all, before the chunk is fetched |
 | `features/home/scene/Scene.tsx` | Canvas, one rAF loop, cleanup. The only file importing `three` |
 | `features/home/scene/createScene.ts` | Pure construction: geometry, materials, lights, fog |
+| `features/home/scene/createHero.ts` | The crystal centrepiece and its halo |
+| `features/home/scene/createEnvironment.ts` | A procedural HDR environment, for reflections |
+
+**The hero object.** The page opens on a cluster of crystal shards off to the right, turning
+slowly and leaning toward the pointer. It replaced a field of thirty-four drifting shapes, which
+was atmosphere but not a subject — the eye had nowhere to land. The field is still there at
+fifteen shapes, as depth behind it rather than as the composition.
+
+Three things carry the render quality, in order of how much they matter:
+
+1. **The environment map.** `createEnvironment.ts` builds a small equirectangular sky
+   procedurally — no HDRI to download, no request on the critical path. It is a **float**
+   texture with a sun of intensity 14 burned into it, and both details are the point: a glossy
+   surface with nothing bright to reflect looks like painted clay, and a byte texture clamps at
+   white so it can tint a surface but never make it glint.
+2. **Partial metalness.** Fully dielectric and the cluster stays matte; fully metallic and the
+   base colour is discarded for chrome. A third of the way across keeps the coral and still
+   takes a hard highlight.
+3. **A base colour lifted toward white.** At full accent saturation the facets facing away
+   bottomed out into near-black and the whole thing read as dark rust — a saturated base leaves
+   the shading no headroom to darken into.
+
+The hero is two nested groups. `root` is positioned and never rotates; `spin` holds the shards.
+The halo is a flat plane, and parented to the rotating group it swung edge-on every half turn
+and flashed across the page as a bright vertical smear.
 
 ### The fighters
 
@@ -489,7 +514,7 @@ reaching the critical path.
 | Entry chunk | 88.99 kB | **93.27 kB** | +4.28 kB — stages, hooks and the whole fighter layer |
 | CSS | 9.09 kB | 10.64 kB | +1.55 kB |
 | Admin (lazy) | 67.31 kB | 67.31 kB | unchanged |
-| Scene (lazy) | — | 131.01 kB | three.js, in its own chunk |
+| Scene (lazy) | — | 132.79 kB | three.js, in its own chunk |
 
 The entry chunk grew 4.8% for the stage journey, four characters, a replacement
 cursor and a scroll-driven background runner. It stays that cheap because the
