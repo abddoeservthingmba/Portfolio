@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { env } from '../config/env.js';
 import { AppError, ErrorCode } from '../lib/errors.js';
 import { sendError } from '../lib/envelope.js';
 import { logger } from '../lib/logger.js';
@@ -36,7 +37,14 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
 
   // cors() rejects a disallowed origin by passing a plain Error to next().
   if (error instanceof Error && error.message.startsWith('Origin not allowed')) {
-    logger.warn('origin rejected', { requestId, message: error.message });
+    // Logs what the allow-list actually contains. Without it, the only way to
+    // tell why an origin was refused is to guess which value reached the
+    // process — and each guess costs a redeploy.
+    logger.warn('origin rejected', {
+      requestId,
+      message: error.message,
+      allowedOrigins: env.allowedOrigins,
+    });
     sendError(res, 403, ErrorCode.FORBIDDEN, 'This origin is not permitted.');
     return;
   }

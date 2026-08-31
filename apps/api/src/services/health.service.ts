@@ -6,6 +6,23 @@ export interface HealthReport {
   uptimeSeconds: number;
   environment: string;
   database: 'ok' | 'unreachable' | 'not_configured';
+
+  /**
+   * What the process was actually configured with.
+   *
+   * Deliberately included: diagnosing a deployment otherwise means guessing
+   * which variables reached the service, and a wrong guess costs a redeploy
+   * each time. None of this is secret — the origins are echoed in CORS headers
+   * anyway, and the rest are presence booleans, never values.
+   */
+  config: {
+    allowedOrigins: string[];
+    publicSiteUrl: string;
+    databaseUrlSet: boolean;
+    supabaseUrlSet: boolean;
+    serviceRoleKeySet: boolean;
+    adminAuthBypassActive: boolean;
+  };
 }
 
 /**
@@ -29,5 +46,14 @@ export async function getHealth(): Promise<HealthReport> {
     uptimeSeconds: Math.round(process.uptime()),
     environment: env.NODE_ENV,
     database,
+    config: {
+      allowedOrigins: env.allowedOrigins,
+      publicSiteUrl: env.PUBLIC_SITE_URL,
+      databaseUrlSet: Boolean(env.DATABASE_URL),
+      supabaseUrlSet: Boolean(env.SUPABASE_URL),
+      serviceRoleKeySet: Boolean(env.SUPABASE_SERVICE_ROLE_KEY),
+      // Reported so a bypass that slipped into a deploy is visible, not silent.
+      adminAuthBypassActive: env.ADMIN_AUTH_BYPASS && env.NODE_ENV === 'development',
+    },
   };
 }
