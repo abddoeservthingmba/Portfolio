@@ -31,12 +31,21 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
 
-  // Comma-separated CORS allow-list. No wildcard is accepted at any point (D5).
-  ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+  /**
+   * Comma-separated CORS allow-list. Still an allow-list — no wildcard is
+   * accepted at any point (D5).
+   *
+   * The deployed site is in the default because it is a fixed, public fact
+   * about this deployment, not a secret or a per-environment choice. Relying
+   * on the variable alone meant the API rejected its own front end whenever
+   * the variable was missing, which is a confusing way to fail. Setting
+   * ALLOWED_ORIGINS still overrides this entirely.
+   */
+  ALLOWED_ORIGINS: z.string().default('http://localhost:5173,https://abdsportfoilo.netlify.app'),
 
   // The public site's own origin, used to build absolute URLs in the sitemap.
   // Not the API's origin — crawlers must be sent to the site, not here.
-  PUBLIC_SITE_URL: z.string().default('http://localhost:5173'),
+  PUBLIC_SITE_URL: z.string().default('https://abdsportfoilo.netlify.app'),
 
   // Public write routes (the contact endpoint) — window in ms, ceiling per window.
   RATE_LIMIT_WINDOW: z.coerce
