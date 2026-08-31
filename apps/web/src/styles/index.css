@@ -225,6 +225,15 @@
     scroll-behavior: smooth;
     scroll-padding-top: 6rem;
     -webkit-tap-highlight-color: transparent;
+    /*
+     * The full-bleed marquee is 100vw, and 100vw includes the scrollbar that
+     * `scrollbar-gutter: stable` has already reserved — so it overhangs the
+     * content box by the scrollbar's width and the document reports horizontal
+     * overflow. Clipping here rather than on body alone: body's `overflow-x`
+     * does not constrain the root, so without this the page can still be
+     * dragged sideways by a few pixels.
+     */
+    overflow-x: clip;
   }
 
   body {
@@ -484,6 +493,118 @@
     content-visibility: auto;
     contain-intrinsic-size: auto 500px;
   }
+
+  /* --- The journey ------------------------------------------------------ */
+
+  /*
+   * The WebGL field. Fixed behind everything, inert to the pointer, and safe to
+   * remove at any moment — every stage is designed to look finished without it,
+   * because the capability gate means most mobile visitors never load it.
+   *
+   * z-index 0 against the grain overlay's 1 and the content's own stacking,
+   * so it sits under the page but over the background colour.
+   */
+  .scene-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /*
+   * Stage content has to sit above the canvas. Without this the WebGL layer
+   * paints over the text rather than behind it.
+   */
+  [data-stage] {
+    position: relative;
+    z-index: 2;
+  }
+
+  /*
+   * The depth every visitor gets, WebGL or not — a soft coloured plane behind
+   * each stage, offset per stage so the page reads as travelling through
+   * layers rather than scrolling a flat column.
+   */
+  [data-stage]::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 10% -20% 10% -20%;
+    pointer-events: none;
+    opacity: 0.4;
+    filter: blur(80px);
+    background: radial-gradient(
+      45% 55% at var(--plane-x, 50%) 50%,
+      oklch(from var(--accent) l c h / 0.22),
+      transparent 70%
+    );
+  }
+
+  /* Alternating sides, so consecutive stages do not stack the same glow. */
+  [data-stage='1']::before,
+  [data-stage='3']::before {
+    --plane-x: 82%;
+    background: radial-gradient(
+      45% 55% at var(--plane-x, 50%) 50%,
+      oklch(from var(--accent-2) l c h / 0.24),
+      transparent 70%
+    );
+  }
+
+  [data-stage='2']::before {
+    --plane-x: 20%;
+  }
+
+  [data-stage='4']::before {
+    --plane-x: 60%;
+    background: radial-gradient(
+      50% 60% at var(--plane-x, 50%) 50%,
+      oklch(from var(--accent-3) l c h / 0.2),
+      transparent 70%
+    );
+  }
+
+  /*
+   * The progress rail, sitting above the canvas and below the header.
+   *
+   * A solid bordered pill rather than a translucent blur. The rail crosses a
+   * full-bleed yellow marquee on the way down, and a semi-transparent panel
+   * over that band reads as a smudge rather than as a control. This is the same
+   * border-and-offset treatment the cards use, so it looks like part of the
+   * site instead of an overlay on top of it.
+   */
+  .stage-hud {
+    padding: 0.8rem 0.6rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    /* Labels appear on hover, so the pill changes width — ease it. */
+    transition: width 0.3s var(--ease-out-expo);
+  }
+
+  /* --- The scroll cue --------------------------------------------------- */
+
+  .scroll-cue-track {
+    display: inline-flex;
+    justify-content: center;
+    width: 1.4rem;
+    height: 2.2rem;
+    padding-top: 0.35rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+  }
+
+  .scroll-cue-dot {
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 999px;
+    background: var(--accent);
+    animation: scroll-cue 1.9s var(--ease-smooth) infinite;
+  }
 }
 
 @keyframes drift {
@@ -567,6 +688,32 @@
   }
 }
 
+/* The WebGL scene fades in once its first frames are on screen. */
+@keyframes scene-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The dot travelling down the scroll cue. */
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(0.85rem);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0.85rem);
+    opacity: 0;
+  }
+}
+
 /*
  * Honours the operating system's reduced-motion setting. Everything still
  * arrives at its final state — nothing is left invisible.
@@ -574,6 +721,16 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  /*
+   * The scene never loads under reduced motion (useSceneCapability refuses it),
+   * so there is nothing to hide here. The rail is hidden instead: it is a
+   * moving indicator, and its destinations are all in the header already.
+   */
+  .stage-hud,
+  .scroll-cue {
+    display: none;
   }
 
   *,

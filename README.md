@@ -16,9 +16,9 @@ Built against **Portfolio CMS Program Blueprint v1.0**. Section references below
 | 3 — Database and public API | ✅ Done         | Live on Supabase PostgreSQL 17, real content seeded        |
 | 4 — Admin CMS               | ✅ Done         | JWKS auth, guards, CRUD for every entity                   |
 | 5 — Assets and contact      | ✅ Done         | Uploads with type sniffing, contact endpoint, admin inbox  |
-| 6 — Production hardening    | 🟡 Mostly      | See the checklist below for what is outstanding            |
-| 7 — Deployment              | 🟡 Configured  | netlify.toml and render.yaml ready; not yet deployed       |
-| 8 — Portfolio polish        | ⬜ Not started  |                                                            |
+| 6 — Production hardening    | 🟡 Mostly      | Test gaps closed, performance recorded; see the checklist  |
+| 7 — Deployment              | ✅ Done         | Live: API on Render, site on Netlify. Rollback unrehearsed |
+| 8 — Portfolio polish        | ✅ Done         | Homepage is a five-stage journey ending at the contact form |
 
 The site runs on live data from Supabase. Content is managed entirely through the admin portal at `/admin` — no redeploy is needed to publish a project, add a certification or replace the resume.
 
@@ -220,6 +220,37 @@ Tests target business-critical behaviour, not a coverage percentage. A suite tha
 - **Four states, always.** Loading, empty, error and success. An interface with only a success state is unfinished, and the empty state is the one most often forgotten.
 - **The admin never outgrows the public site.** If the CMS becomes more complex than the portfolio it manages, the scope has drifted.
 
+### The homepage journey
+
+The homepage is five stages travelled in order, ending at the contact form rather than at a link
+to it: **Start → Work → Skills → Path → Contact**. Every stage renders a component that already
+existed — `Hero`, `ProjectGrid`, `SkillMarquee`, `SkillCategory`, `ExperienceTimeline`,
+`ContactForm`. Nothing was reimplemented for the journey; only the frame around it is new.
+
+`/contact` still exists as its own route, and renders the same `ContactForm`. One form, two ways
+to reach it.
+
+| File | Job |
+| --- | --- |
+| `features/home/Stage.tsx` | Layout and the `data-stage` attribute. No logic |
+| `lib/useScrollStage.ts` | One IntersectionObserver reporting the visible stage |
+| `features/home/StageHUD.tsx` | The progress rail — real anchor links in a real `<nav>` |
+| `features/home/scene/SceneLayer.tsx` | The lazy boundary. **Must never statically import `three`** |
+| `features/home/scene/useSceneCapability.ts` | Decides whether 3D runs at all, before the chunk is fetched |
+| `features/home/scene/Scene.tsx` | Canvas, one rAF loop, cleanup. The only file importing `three` |
+| `features/home/scene/createScene.ts` | Pure construction: geometry, materials, lights, fog |
+
+Three things here are easy to break by accident:
+
+- **The lazy boundary.** A static `import ... from 'three'` anywhere in `SceneLayer`'s import
+  graph moves 130 kB into the entry chunk with no visible symptom. See the Performance section.
+- **Palette reading.** `createScene` resolves the CSS custom properties through a 1×1 canvas,
+  not `getComputedStyle`. The tokens are authored in `oklch`, Chrome returns `oklch(...)`
+  unchanged as the computed value, and `THREE.Color` cannot parse it — it falls back to white
+  and every shape renders grey. This was an actual bug, not a hypothetical one.
+- **Light intensity.** three.js uses physical light units. A combined intensity near 5 clamps
+  every material to white and throws the palette away; the total here is deliberately near 2.
+
 ---
 
 ## What V1 deliberately excludes
@@ -370,7 +401,7 @@ The blueprint's release gate (Appendix B). Verified means checked, not assumed.
 - The contact endpoint is rate limited and returns a `Retry-After` header
 - No response body carries a stack trace, driver message or configuration value
 - Security headers on both surfaces; CSP, HSTS and frame-ancestors on the site
-- Typecheck, lint, format check and 115 tests pass
+- Typecheck, lint, format check and 140 tests pass
 - Mock data deleted, not bypassed
 - A failed API call renders an error state with navigation intact
 - Unique titles, descriptions and Open Graph tags per route
@@ -382,14 +413,58 @@ The blueprint's release gate (Appendix B). Verified means checked, not assumed.
 
 | Gap | Why it is still open |
 | --- | --- |
-| No test proves a **valid non-admin** token is rejected | Needs a real second Supabase identity. The code path is separate from the 401 path and is currently only covered by inspection |
-| CRUD success paths are untested | The suite deliberately runs without a database. Covering these needs a test database and a fixture reset between cases |
-| No performance audit recorded | Run Lighthouse against the deployed site and record the result |
 | Keyboard and contrast pass not formally recorded | Focus styles, labels and semantics are in place; the walkthrough has not been done and signed off |
-| Rollback not yet rehearsed | Cannot be rehearsed before the first deploy |
-| Provider quotas not verified | Check current Supabase, Render and Netlify limits at launch and record them here |
+| Rollback not yet rehearsed | Documented in this README but never executed against the live services |
+| Provider quotas not verified | Check current Supabase, Render and Netlify limits and record them here |
 
-None of these block a first deploy. All of them block calling the release gate passed.
+None of these block a deploy. All of them block calling the release gate passed.
+
+### Closed
+
+**A valid non-admin token is rejected** — `apps/api/tests/authorisation.test.ts`. The earlier
+suite proved an *invalid* token fails, which is only half of what `requireAuth` does. These tests
+stub `verifyAccessToken` to succeed and vary what the users table returns, so the authorisation
+half is exercised directly: a caller with no row and a caller with a non-admin row both get
+**403, not 401** — they are authenticated, just not permitted. It sits in its own file because
+`vi.mock` is hoisted module-wide, and stubbing verification inside `authBoundary.test.ts` would
+have made every forged-token assertion there vacuous.
+
+**CRUD success paths** — `apps/api/tests/adminCrud.test.ts`. Create, read, update and delete
+against a mocked Prisma client for projects and skills, asserting status codes and the `{data,
+meta}` envelope. Projects is the one that matters: it is the only resource that reconciles a
+relation inside a transaction. Two resources rather than all seven — they share one controller,
+service and envelope shape, so the rest would restate the same wiring.
+
+Worth stating plainly: these mock the database, so they prove the **wiring** — route to
+validation to service to envelope to status code — and not the SQL. A test that a guard returns
+401 to everyone, administrator included, would have passed the whole suite before this.
+
+### Performance
+
+Measured on the production build, before and after the Phase 8 homepage journey. The point of
+recording both is that the journey introduced three.js, and the whole design rests on it never
+reaching the critical path.
+
+| Bundle (gzipped) | Before | After | |
+| --- | --- | --- | --- |
+| Entry chunk | 88.99 kB | **90.57 kB** | +1.58 kB — the new stage components and hooks |
+| CSS | 9.09 kB | 9.68 kB | +0.59 kB |
+| Admin (lazy) | 67.31 kB | 67.31 kB | unchanged |
+| Scene (lazy) | — | 130.79 kB | three.js, in its own chunk |
+
+The entry chunk grew 1.8%. three.js is 130 kB gzipped and **none of it is in the entry chunk** —
+`SceneLayer.tsx` reaches `Scene.tsx` only through `React.lazy`, and a static import anywhere in
+that path would silently undo the entire arrangement.
+
+Beyond the lazy boundary, the scene is gated twice more. It waits for `requestIdleCallback`, so
+it never competes with the hero, the fonts or the first content fetch; and `useSceneCapability`
+declines outright on reduced-motion, save-data, sub-4g connections, fewer than four cores, under
+4 GB of memory, small touch screens, and anything without WebGL2. Verified over the DevTools
+protocol: the chunk is requested on desktop and **is not requested** under emulated
+reduced-motion or at a 375px touch viewport.
+
+That gating is why every stage is built to look finished without the canvas — for most phone
+visitors, the CSS depth treatment *is* the design, not a degraded copy of it.
 
 ---
 

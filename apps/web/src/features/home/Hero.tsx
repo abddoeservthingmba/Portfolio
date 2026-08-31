@@ -108,10 +108,31 @@ export function Hero({
         </Magnetic>
 
         <Magnetic>
-          <Link to="/contact" className={buttonStyles('secondary', 'lg')}>
+          {/*
+            An in-page jump to the final stage rather than a route change — the
+            contact form is the end of this page now, not somewhere else.
+          */}
+          <a href="#contact" className={buttonStyles('secondary', 'lg')}>
             Say hello
-          </Link>
+          </a>
         </Magnetic>
+      </Reveal>
+
+      {/*
+        The cue that this page is travelled rather than read. Hidden from
+        assistive tech: it describes a gesture, and the same destinations are
+        already in the header and the progress rail.
+      */}
+      <Reveal index={5} className="mt-16 hidden sm:block">
+        <span
+          aria-hidden="true"
+          className="scroll-cue inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.24em] text-subtle"
+        >
+          <span className="scroll-cue-track">
+            <span className="scroll-cue-dot" />
+          </span>
+          Scroll to begin
+        </span>
       </Reveal>
     </section>
   );
