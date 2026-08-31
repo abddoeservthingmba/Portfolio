@@ -20,6 +20,11 @@ import { SkillMarquee } from '@/features/home/SkillMarquee';
 import { Stage, StageLabel } from '@/features/home/Stage';
 import { StageHUD } from '@/features/home/StageHUD';
 import { SceneLayer } from '@/features/home/scene/SceneLayer';
+import { CharacterSelect } from '@/features/home/character/CharacterSelect';
+import { CursorCompanion } from '@/features/home/character/CursorCompanion';
+import { BackgroundRunner } from '@/features/home/character/BackgroundRunner';
+import { useCharacter } from '@/features/home/character/useCharacter';
+import { useFighterLayer } from '@/features/home/character/useFighterLayer';
 
 /**
  * The homepage as a journey: five stages travelled in order, ending at the
@@ -52,6 +57,11 @@ export function HomePage() {
   useReveal([settings, featured.data, skills.data, experience.data]);
   const activeStage = useScrollStage(STAGES.length);
 
+  const { characterId, choose } = useCharacter();
+  // Two separate answers: replacing the cursor needs a cursor to replace, the
+  // background runner only needs motion to be welcome.
+  const fighter = useFighterLayer();
+
   useDocumentMeta({
     title: 'Portfolio',
     description:
@@ -69,8 +79,16 @@ export function HomePage() {
       <SceneLayer />
       <StageHUD stages={STAGES} active={activeStage} />
 
+      {/* The chosen fighter, running the length of the page behind everything. */}
+      {fighter.runner && <BackgroundRunner characterId={characterId} />}
+      {fighter.cursor && <CursorCompanion characterId={characterId} />}
+
       <Stage index={0} id="start" className="pt-0">
         <Hero settings={settings} isLoading={settings === null} />
+
+        <div className="reveal mt-12" style={{ '--i': 6 } as React.CSSProperties}>
+          <CharacterSelect value={characterId} onChange={choose} />
+        </div>
       </Stage>
 
       {/*

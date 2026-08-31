@@ -586,6 +586,251 @@
     transition: width 0.3s var(--ease-out-expo);
   }
 
+  /* --- The fighters ----------------------------------------------------- */
+
+  /*
+   * The run cycle. Limb groups rotate about their joints; `view-box` puts
+   * transform-origin in viewBox units so the joint coordinates in
+   * CharacterSprite are the ones that apply.
+   *
+   * Animation is gated on an ancestor's data-pose, which is written directly to
+   * the DOM by the frame loops. That is what keeps a sixty-times-a-second
+   * pose change from becoming a sixty-times-a-second React render.
+   */
+  .limb {
+    transform-box: view-box;
+  }
+
+  [data-pose='run'] .limb-arm-front,
+  [data-pose='run'] .limb-leg-back {
+    animation: limb-swing 0.42s linear infinite;
+  }
+
+  [data-pose='run'] .limb-arm-back,
+  [data-pose='run'] .limb-leg-front {
+    animation: limb-swing 0.42s linear infinite;
+    /* Half a cycle out of phase — opposite arm, opposite leg. */
+    animation-delay: -0.21s;
+  }
+
+  /* Idle is a slow breath, not stillness. A frozen figure reads as a bug. */
+  [data-pose='idle'] .limb-arm-front,
+  [data-pose='idle'] .limb-arm-back {
+    animation: limb-breathe 2.8s var(--ease-smooth) infinite alternate;
+  }
+
+  /* The replacement cursor ------------------------------------------------ */
+
+  /*
+   * The native cursor is hidden only while the fighter layer is mounted, and
+   * only outside text entry — a caret is doing a job no sprite can do, and
+   * taking it away makes a form genuinely harder to fill in.
+   */
+  :root[data-fighter-cursor] body,
+  :root[data-fighter-cursor] a,
+  :root[data-fighter-cursor] button,
+  :root[data-fighter-cursor] label,
+  :root[data-fighter-cursor] summary {
+    cursor: none;
+  }
+
+  :root[data-fighter-cursor] input,
+  :root[data-fighter-cursor] textarea,
+  :root[data-fighter-cursor] select,
+  :root[data-fighter-cursor] [contenteditable] {
+    cursor: auto;
+  }
+
+  .fighter-cursor,
+  .fighter-dot {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-smooth);
+    will-change: transform;
+  }
+
+  .fighter-cursor[data-visible='true'],
+  :root[data-fighter-cursor] .fighter-dot {
+    opacity: 1;
+  }
+
+  /* The true pointer position. Small, high contrast, always exact. */
+  .fighter-dot {
+    width: 7px;
+    height: 7px;
+    margin: -3.5px 0 0 -3.5px;
+    border: 2px solid var(--bg);
+    border-radius: 999px;
+    background: var(--accent);
+    z-index: 61;
+  }
+
+  .fighter-cursor-sprite {
+    position: relative;
+    /* Offset up and left of the pointer so the dot is never hidden by a foot. */
+    margin: -54px 0 0 -14px;
+  }
+
+  .fighter-cursor-svg {
+    width: 52px;
+    height: auto;
+    display: block;
+    filter: drop-shadow(2px 3px 0 oklch(0% 0 0 / 0.25));
+  }
+
+  /* The flare on a click. Anime does not do subtle impacts. */
+  .fighter-impact {
+    position: absolute;
+    left: 50%;
+    top: 55%;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 999px;
+    background: var(--aura, var(--accent));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  [data-impact] .fighter-impact {
+    animation: impact-burst 0.32s var(--ease-out-expo);
+  }
+
+  /* The background runner -------------------------------------------------- */
+
+  .fighter-runner {
+    position: fixed;
+    left: 0;
+    /*
+     * Low, so he runs along the foot of the page. Raised any further and a
+     * 400px figure crosses the middle of the content, where a body of text is
+     * trying to be read through him.
+     */
+    bottom: 2vh;
+    z-index: 1;
+    pointer-events: none;
+    /* Low enough to stay scenery. This is the dial if he ever competes with
+       the text — not the component. */
+    opacity: 0.13;
+    will-change: transform;
+  }
+
+  .fighter-runner[data-facing='-1'] .fighter-runner-svg {
+    transform: scaleX(-1);
+  }
+
+  .fighter-runner-svg {
+    width: clamp(120px, 15vw, 240px);
+    height: auto;
+    display: block;
+  }
+
+  /* Speed lines behind him, drawn as repeating gradient stripes. */
+  .fighter-runner-lines {
+    position: absolute;
+    right: 100%;
+    top: 34%;
+    width: clamp(120px, 16vw, 260px);
+    height: 42%;
+    margin-right: -8px;
+    opacity: 0;
+    background: repeating-linear-gradient(
+      to right,
+      var(--aura, var(--accent)) 0 3px,
+      transparent 3px 16px
+    );
+    mask-image: linear-gradient(to right, transparent, black 70%);
+  }
+
+  .fighter-runner[data-facing='-1'] .fighter-runner-lines {
+    right: auto;
+    left: 100%;
+    margin: 0 0 0 -8px;
+    mask-image: linear-gradient(to left, transparent, black 70%);
+  }
+
+  .fighter-runner[data-pose='run'] .fighter-runner-lines {
+    opacity: 0.85;
+    animation: speed-lines 0.3s linear infinite;
+  }
+
+  /* The picker ------------------------------------------------------------- */
+
+  .fighter-option {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .fighter-option:hover {
+    transform: translate(-1px, -3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .fighter-option[data-selected='true'] {
+    transform: translate(-1px, -3px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* The ring has to be drawn here: the real radio is visually hidden. */
+  .fighter-option:has(:focus-visible) {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  .fighter-option-svg {
+    width: 40px;
+    height: auto;
+    display: block;
+  }
+
+  /* The selected fighter idles in the picker; the rest hold still. */
+  .fighter-option[data-selected='true'] .fighter-option-svg .limb-arm-front,
+  .fighter-option[data-selected='true'] .fighter-option-svg .limb-arm-back {
+    animation: limb-breathe 2.4s var(--ease-smooth) infinite alternate;
+  }
+
+  /* --- Manga furniture ---------------------------------------------------- */
+
+  /*
+   * Halftone. One repeating radial gradient rather than an image, so it costs
+   * no request and scales to any size — the dot screen a manga page is printed
+   * with, at about a tenth of the contrast.
+   */
+  .halftone {
+    position: relative;
+  }
+
+  .halftone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.12;
+    background-image: radial-gradient(var(--ink) 1.1px, transparent 1.2px);
+    background-size: 9px 9px;
+    mask-image: radial-gradient(70% 60% at 50% 50%, black, transparent);
+  }
+
+  /* The episode marker on each stage. */
+  .episode-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.75rem 0.3rem 0.5rem;
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
   /* --- The scroll cue --------------------------------------------------- */
 
   .scroll-cue-track {
@@ -695,6 +940,51 @@
   }
 }
 
+/*
+ * One run cycle for every limb. Arms and legs share it and are offset by half a
+ * period, which is the whole trick — four separate keyframe blocks would say
+ * the same thing four times and drift apart the first time one is edited.
+ */
+@keyframes limb-swing {
+  0% {
+    transform: rotate(38deg);
+  }
+  50% {
+    transform: rotate(-38deg);
+  }
+  100% {
+    transform: rotate(38deg);
+  }
+}
+
+@keyframes limb-breathe {
+  from {
+    transform: rotate(2deg);
+  }
+  to {
+    transform: rotate(-4deg);
+  }
+}
+
+/* The click flare: a ring that expands and thins out. */
+@keyframes impact-burst {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(5);
+  }
+}
+
+/* Speed lines streaming backwards off the runner. */
+@keyframes speed-lines {
+  to {
+    background-position-x: -16px;
+  }
+}
+
 /* The dot travelling down the scroll cue. */
 @keyframes scroll-cue {
   0% {
@@ -730,6 +1020,18 @@
    */
   .stage-hud,
   .scroll-cue {
+    display: none;
+  }
+
+  /*
+   * The fighter layer never mounts under reduced motion — useFighterLayer
+   * refuses it — so these are a backstop rather than the mechanism. The picker
+   * stays: choosing a character is a preference, not an animation, and the
+   * sprites simply hold still.
+   */
+  .fighter-cursor,
+  .fighter-dot,
+  .fighter-runner {
     display: none;
   }
 

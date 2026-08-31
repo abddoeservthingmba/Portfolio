@@ -240,7 +240,46 @@ to reach it.
 | `features/home/scene/Scene.tsx` | Canvas, one rAF loop, cleanup. The only file importing `three` |
 | `features/home/scene/createScene.ts` | Pure construction: geometry, materials, lights, fog |
 
-Three things here are easy to break by accident:
+### The fighters
+
+The visitor picks one of four fighters, and that choice replaces the mouse
+cursor and puts the same character running across the background as the page
+scrolls. The pick is remembered in `localStorage`.
+
+The characters are **original designs on shonen archetypes** — a straw-hat
+brawler, a ninja, a martial artist, a swordsman. That is a deliberate legal
+line, not a stylistic one: the archetypes are free, the famous characters that
+established them are owned by their publishers, and this site carries a real
+person's name. Original art keeps it shippable.
+
+| File | Job |
+| --- | --- |
+| `character/characters.ts` | Pure data: names, titles, palettes. No JSX |
+| `character/CharacterSprite.tsx` | One shared skeleton plus per-character hair, headwear and props |
+| `character/CursorCompanion.tsx` | Follows the pointer. Fully imperative |
+| `character/BackgroundRunner.tsx` | Scroll position drives his position along the page |
+| `character/CharacterSelect.tsx` | A real radio group — arrow keys and labels for free |
+| `character/useFighterLayer.ts` | Two answers: may the cursor run, may the runner run |
+
+Four things worth knowing before editing these:
+
+- **Both followers are imperative on purpose.** They update every frame. Routing
+  a cursor position through React state re-renders the sprite sixty times a
+  second to no benefit, so the frame loops write transforms and one `data-pose`
+  attribute directly, and CSS keys the run cycle off that attribute.
+- **One run cycle, not four.** Arms and legs share `@keyframes limb-swing` and
+  are offset half a period. Writing four blocks would say the same thing four
+  times and drift apart the first time one was edited.
+- **The sprite viewBox starts at `y: -16`.** The martial artist's hair is the
+  tallest thing any fighter owns and most of his silhouette. In a viewBox
+  starting at zero it was silently clipped and he read as stubby.
+- **The native cursor is only hidden where a sprite can do its job.** Inputs,
+  textareas and `contenteditable` keep `cursor: auto` — a caret does something
+  no sprite can, and taking it away makes a form genuinely harder to fill in.
+  A true-position dot is drawn at the real pointer, or nothing lines up to
+  click.
+
+Three things in the scene are easy to break by accident:
 
 - **The lazy boundary.** A static `import ... from 'three'` anywhere in `SceneLayer`'s import
   graph moves 130 kB into the entry chunk with no visible symptom. See the Performance section.
@@ -447,12 +486,17 @@ reaching the critical path.
 
 | Bundle (gzipped) | Before | After | |
 | --- | --- | --- | --- |
-| Entry chunk | 88.99 kB | **90.57 kB** | +1.58 kB — the new stage components and hooks |
-| CSS | 9.09 kB | 9.68 kB | +0.59 kB |
+| Entry chunk | 88.99 kB | **93.27 kB** | +4.28 kB — stages, hooks and the whole fighter layer |
+| CSS | 9.09 kB | 10.64 kB | +1.55 kB |
 | Admin (lazy) | 67.31 kB | 67.31 kB | unchanged |
-| Scene (lazy) | — | 130.79 kB | three.js, in its own chunk |
+| Scene (lazy) | — | 131.01 kB | three.js, in its own chunk |
 
-The entry chunk grew 1.8%. three.js is 130 kB gzipped and **none of it is in the entry chunk** —
+The entry chunk grew 4.8% for the stage journey, four characters, a replacement
+cursor and a scroll-driven background runner. It stays that cheap because the
+characters are inline SVG built from one shared skeleton and animated in CSS —
+no sprite sheets, no image requests, no animation library.
+
+three.js is 131 kB gzipped and **none of it is in the entry chunk** —
 `SceneLayer.tsx` reaches `Scene.tsx` only through `React.lazy`, and a static import anywhere in
 that path would silently undo the entire arrangement.
 
@@ -465,6 +509,12 @@ reduced-motion or at a 375px touch viewport.
 
 That gating is why every stage is built to look finished without the canvas — for most phone
 visitors, the CSS depth treatment *is* the design, not a degraded copy of it.
+
+The fighter layer is gated on the same principle by `useFighterLayer`, but with two separate
+answers rather than one. Under reduced motion neither the cursor nor the runner mounts. On a
+touch device the runner still could, but the cursor never does — there is no cursor to replace,
+and a sprite chasing a finger is an obstruction. The picker itself always renders: choosing a
+character is a preference, not an animation.
 
 ---
 

@@ -14,6 +14,9 @@ import * as THREE from 'three';
 
 const COUNT = 34;
 
+/** Speed lines. Enough to fill the frame at speed, few enough to vanish at rest. */
+const STREAK_COUNT = 26;
+
 /** How far into the field the camera travels between the top and bottom. */
 export const TRAVEL_DEPTH = 62;
 
@@ -22,6 +25,9 @@ export interface SceneParts {
   camera: THREE.PerspectiveCamera;
   /** Every shape, with the per-object drift values the loop needs. */
   shapes: Shape[];
+  /** Speed lines. The loop moves them and fades them with scroll velocity. */
+  streaks: THREE.Mesh[];
+  streakMaterial: THREE.Material & { opacity: number };
   dispose: () => void;
 }
 
@@ -86,6 +92,24 @@ export function readThemeColors(): THREE.Color[] {
 }
 
 /**
+ * The three-step ramp that turns smooth lighting into flat cel bands.
+ *
+ * NearestFilter is not optional here. With the default linear filtering the
+ * texture is interpolated and the bands blend back into the gradient this
+ * exists to destroy.
+ */
+function createToonGradient(): THREE.DataTexture {
+  const steps = new Uint8Array([90, 175, 255]);
+  const texture = new THREE.DataTexture(steps, steps.length, 1, THREE.RedFormat);
+
+  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.NearestFilter;
+  texture.needsUpdate = true;
+
+  return texture;
+}
+
+/**
  * Four geometries shared across all 34 meshes. Building one per shape would
  * allocate 34 sets of buffers for four distinct forms.
  *
@@ -144,17 +168,25 @@ export function createScene(width: number, height: number): SceneParts {
    */
   scene.fog = new THREE.Fog(background, 20, 58);
 
+  /*
+   * Cel shading. MeshToonMaterial quantises lighting through a gradient map,
+   * so instead of a smooth falloff each face lands in one of three flat bands —
+   * which is what makes an anime cel look like an anime cel rather than a
+   * render. A one-pixel-tall texture is the whole technique.
+   */
+  const gradient = createToonGradient();
+
   const materials = colors.map(
     (color) =>
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshToonMaterial({
         color,
-        flatShading: true,
-        roughness: 0.78,
-        metalness: 0,
+        gradientMap: gradient,
         transparent: true,
         // The scene sits behind body copy. Anything more opaque than this and
         // the text becomes work to read, which is a bad trade for decoration.
-        opacity: 0.6,
+        // Cel shading pushed this down: flat bands read as more solid than the
+        // graduated shading they replaced, at the same opacity value.
+        opacity: 0.5,
       }),
   );
 
@@ -205,6 +237,44 @@ export function createScene(width: number, height: number): SceneParts {
     });
   }
 
+  /*
+   * Speed lines, in three dimensions.
+   *
+   * Long thin bars lying along the view axis. Held still they are almost
+   * invisible; the loop fades them up with scroll velocity, so scrolling hard
+   * fills the frame with streaks and stopping makes them vanish. It is the
+   * oldest shorthand in the medium for "moving fast", and it costs one shared
+   * geometry and one shared material.
+   */
+  const streakGeometry = new THREE.BoxGeometry(0.07, 0.07, 9);
+  const streakMaterial = new THREE.MeshBasicMaterial({
+    color: colors[0],
+    transparent: true,
+    opacity: 0,
+    // Never occlude a shape, and never be occluded into a hard edge.
+    depthWrite: false,
+    fog: false,
+  });
+
+  const streaks: THREE.Mesh[] = [];
+
+  for (let index = 0; index < STREAK_COUNT; index += 1) {
+    const streak = new THREE.Mesh(streakGeometry, streakMaterial);
+
+    // A ring around the view axis, clear of the middle where the text is.
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 7 + Math.random() * 9;
+
+    streak.position.set(
+      Math.cos(angle) * radius,
+      Math.sin(angle) * radius * 0.7,
+      -Math.random() * TRAVEL_DEPTH,
+    );
+
+    scene.add(streak);
+    streaks.push(streak);
+  }
+
   /**
    * Geometries and materials are shared, so they are disposed once here rather
    * than per mesh. WebGL resources are not garbage collected — without this,
@@ -213,8 +283,11 @@ export function createScene(width: number, height: number): SceneParts {
   const dispose = () => {
     geometries.forEach((geometry) => geometry.dispose());
     materials.forEach((material) => material.dispose());
+    streakGeometry.dispose();
+    streakMaterial.dispose();
+    gradient.dispose();
     scene.clear();
   };
 
-  return { scene, camera, shapes, dispose };
+  return { scene, camera, shapes, streaks, streakMaterial, dispose };
 }

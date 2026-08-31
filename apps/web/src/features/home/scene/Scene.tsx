@@ -114,7 +114,9 @@ export default function Scene() {
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
 
-      current.scroll += (target.scroll - current.scroll) * EASE;
+      const scrollStep = (target.scroll - current.scroll) * EASE;
+
+      current.scroll += scrollStep;
       current.pointerX += (target.pointerX - current.pointerX) * EASE;
       current.pointerY += (target.pointerY - current.pointerY) * EASE;
 
@@ -130,6 +132,28 @@ export default function Scene() {
         shape.mesh.rotation.z += shape.spin.z * delta;
         shape.mesh.position.y =
           shape.baseY + Math.sin(elapsed * 0.5 + shape.bobPhase) * shape.bobAmplitude;
+      }
+
+      /*
+       * Speed lines, faded by how fast the page is actually moving. The eased
+       * step is already a per-frame velocity, so it needs scaling rather than
+       * differentiating; the clamp stops a flung scroll from whiting out the
+       * frame.
+       */
+      const velocity = Math.min(Math.abs(scrollStep) * 260, 1);
+      parts.streakMaterial.opacity = velocity * 0.5;
+
+      if (velocity > 0.01) {
+        for (const streak of parts.streaks) {
+          // Toward the camera, faster than the camera itself, so they read as
+          // rushing past rather than being overtaken.
+          streak.position.z += velocity * 220 * delta * Math.sign(scrollStep || 1);
+
+          // Recycle around the camera so a finite set covers an infinite run.
+          const relative = streak.position.z - parts.camera.position.z;
+          if (relative > 14) streak.position.z -= TRAVEL_DEPTH;
+          else if (relative < -TRAVEL_DEPTH) streak.position.z += TRAVEL_DEPTH;
+        }
       }
 
       renderer.render(parts.scene, parts.camera);
