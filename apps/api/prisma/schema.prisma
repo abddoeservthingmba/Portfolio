@@ -9,6 +9,11 @@
 //   - Delete behaviour declared explicitly per relation, never left to a default.
 //   - Audit timestamps on all managed content; updatedAt is set by the database
 //     on every mutation, not by the client.
+//   - Row level security is enabled on every table, with no policies, so
+//     Supabase's auto-generated REST API cannot reach the data with the public
+//     anon key. Prisma is the owner and is exempt. Prisma does not manage this
+//     setting, so a new model needs a hand-written ENABLE ROW LEVEL SECURITY in
+//     the migration that creates it — see the README's boundary section.
 
 generator client {
   provider = "prisma-client-js"

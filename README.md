@@ -42,6 +42,23 @@ Browser ──HTTPS──> Netlify (static React bundle)
 
 **Non-negotiable.** The service-role key exists only in the API's server environment. If a feature seems to need it in the browser, the feature is wrong, not the rule.
 
+### The database is closed to the browser
+
+Supabase publishes every table in `public` through an auto-generated REST API, authorised by the anon key — which is compiled into the site's bundle and is public by design. That is a second door into the same data, one that opens beside Express rather than through it, and none of the middleware chain below stands in front of it.
+
+So the door is bolted shut. Every table has row level security enabled and **no policies at all** (`20260902093000_enable_row_level_security`), which denies the `anon` and `authenticated` roles outright; their table grants are revoked as well, so a policy added by mistake would still have nothing to act on. Prisma is unaffected — it connects as the tables' owner, and Postgres exempts an owner from its own policies.
+
+Two rules follow from this:
+
+- **Never add `FORCE ROW LEVEL SECURITY`.** It extends RLS to the owner, which against an empty policy set takes the whole API offline.
+- **A new table needs its own `ENABLE ROW LEVEL SECURITY` in the migration that creates it.** Prisma does not manage RLS, so it will not carry the setting forward for you.
+
+### Which key is in the bundle
+
+An anon key and a service-role key are the same shape and differ only in a `role` claim buried in the JWT payload. Pasting the wrong one into `VITE_SUPABASE_ANON_KEY` is invisible on inspection, and Vite compiles it into the bundle either way — where a service-role key would hold `rolbypassrls` and make the RLS above worthless.
+
+So the key is checked rather than trusted. `apps/web/src/lib/supabase.ts` decodes the `role` claim at startup and refuses anything but `anon`: the sign-in form reports itself unconfigured and the client is built with a dud key, so the real one cannot be used by any code path. Decoding is not verification — it asks which key the build shipped, not whether the token is genuine, which only the API can answer and does on every request.
+
 ### The middleware chain
 
 Every request passes the same ordered chain (`apps/api/src/app.ts`). The order is the security model:
@@ -459,6 +476,7 @@ The blueprint's release gate (Appendix B). Verified means checked, not assumed.
 - Environment sets separate per environment; `.env` ignored from the first commit
 - The service-role key exists only in the API's environment and carries no client build prefix
 - CORS restricted to an exact origin, no wildcard anywhere
+- Row level security enabled on every table with no policies, closing Supabase's auto-generated REST API to the public anon key — the API is the only route to the data
 - Every mutation route has an automated test proving it rejects an unauthenticated request — 43 of them, enumerated from the route table
 - A forged `alg: none` token is rejected; the verification algorithm is pinned
 - Uploads enforce server-side type sniffing, per-entity size caps and generated storage paths
@@ -480,6 +498,7 @@ The blueprint's release gate (Appendix B). Verified means checked, not assumed.
 | Keyboard and contrast pass not formally recorded | Focus styles, labels and semantics are in place; the walkthrough has not been done and signed off |
 | Rollback not yet rehearsed | Documented in this README but never executed against the live services |
 | Provider quotas not verified | Check current Supabase, Render and Netlify limits and record them here |
+| **Service-role key not yet rotated** | A service-role key was found in the local `apps/web/.env` under the `VITE_SUPABASE_ANON_KEY` name on 2026-09-02. It was never committed and never reached a deployed bundle — the Netlify build takes its value from the dashboard, and the live bundle was checked and carries an `anon` key. The local file is fixed and a guard now rejects a privileged key, but the key itself must still be rotated in the Supabase dashboard, and `apps/web/.env.bak-before-key-fix` deleted afterwards. |
 
 None of these block a deploy. All of them block calling the release gate passed.
 
