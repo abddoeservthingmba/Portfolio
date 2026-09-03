@@ -374,16 +374,33 @@
   /*
    * The display face, with its weight and tracking pinned together.
    *
-   * Weight is 400 because that is the only cut Archivo Black has, and asking a
-   * black face for 800 gets a synthesised bold with its counters smeared shut.
-   * Tracking lives here rather than on each heading because the correct value
-   * is a property of the typeface, not of the element: Archivo Black is already
+   * WHY 800 AND NOT 400
+   *
+   * Archivo Black has exactly one cut, at weight 400, and it is already black —
+   * so the obvious thing is to ask for 400 and be done. That is wrong, because
+   * --font-display falls back to the ordinary sans, and a heading that lands on
+   * the fallback would then render at book weight. These headings were
+   * font-extrabold before the webfont existed; losing the webfont must not also
+   * lose the bold.
+   *
+   * So ask for 800 and forbid synthesis:
+   *
+   *   - Archivo Black loaded: 400 is the only face, the browser uses it, and
+   *     font-synthesis-weight stops it faking a bolder one on top.
+   *   - Archivo Black missing: Inter answers at 700, its real bold, which is
+   *     heavier than the 800 the headings used to synthesise anyway.
+   *
+   * Tracking lives here rather than on each heading because the right value is
+   * a property of the typeface, not of the element: Archivo Black is already
    * narrow-set, so the -0.045em these headings carried against a UI font closes
    * the letters into one another.
    */
   .display {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-weight: 800;
+    /* Shorthand first for older Safari, then the longhand that says only this. */
+    font-synthesis: none;
+    font-synthesis-weight: none;
     letter-spacing: -0.02em;
   }
 
