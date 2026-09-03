@@ -69,6 +69,15 @@
   --shadow-soft: 0 18px 40px oklch(30% 0.05 60 / 0.1);
 
   --grain-opacity: 0.035;
+
+  /*
+   * Correction applied to generated project cover art. The covers are fixed
+   * light tints by design — they read as printed stock — so on cream they need
+   * nothing, and against the dark palette they are dimmed rather than
+   * recoloured. Recolouring them would cost the per-project identity the tint
+   * is carrying.
+   */
+  --cover-dim: none;
 }
 
 /*
@@ -121,6 +130,8 @@
     --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.5);
 
     --grain-opacity: 0.05;
+
+    --cover-dim: brightness(0.82) saturate(0.9);
   }
 }
 
@@ -167,6 +178,8 @@
   --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.5);
 
   --grain-opacity: 0.05;
+
+  --cover-dim: brightness(0.82) saturate(0.9);
 }
 
 @theme inline {
@@ -210,9 +223,20 @@
   --shadow-raised: var(--shadow-lg);
 
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI Variable Display', 'Segoe UI', Roboto,
+    Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI Variable Display', 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, monospace;
+
+  /*
+   * Display face. Archivo Black ships a single cut at weight 400 that is
+   * already ultra-heavy, which is why every use of it below also pins
+   * font-weight — asking for 800 would make the browser synthesise a fake bold
+   * on top of an already-black face, and smear the counters shut.
+   *
+   * The system stack behind it is the ordinary sans, not a serif: if the
+   * webfont never arrives the headings should look unstyled, not wrong.
+   */
+  --font-display: 'Archivo Black', var(--font-sans);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   /* Deliberately overshoots. The bounce is the personality. */
@@ -343,6 +367,32 @@
 
   .js .split-reveal[data-revealed] .split-word {
     transform: none;
+  }
+
+  /* --- Display type ----------------------------------------------------- */
+
+  /*
+   * The display face, with its weight and tracking pinned together.
+   *
+   * Weight is 400 because that is the only cut Archivo Black has, and asking a
+   * black face for 800 gets a synthesised bold with its counters smeared shut.
+   * Tracking lives here rather than on each heading because the correct value
+   * is a property of the typeface, not of the element: Archivo Black is already
+   * narrow-set, so the -0.045em these headings carried against a UI font closes
+   * the letters into one another.
+   */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  /*
+   * Optical sizing, by hand. Type wants tighter tracking the larger it is set,
+   * and Archivo Black has no optical size axis to do this automatically.
+   */
+  .display-xl {
+    letter-spacing: -0.035em;
   }
 
   /* --- Surfaces --------------------------------------------------------- */
@@ -831,6 +881,17 @@
     text-transform: uppercase;
   }
 
+  /* --- Route transitions ------------------------------------------------ */
+
+  /*
+   * The header is snapshotted separately from the page. It is identical either
+   * side of a route change, so giving it its own name means the browser holds
+   * it still instead of cross-fading it with the content moving underneath.
+   */
+  .site-header {
+    view-transition-name: site-header;
+  }
+
   /* --- The scroll cue --------------------------------------------------- */
 
   .scroll-cue-track {
@@ -1005,6 +1066,44 @@
 }
 
 /*
+ * Route transitions.
+ *
+ * The outgoing page lifts and fades, the incoming one rises into place — the
+ * same vocabulary as the .reveal entrance, so a route change reads like the
+ * rest of the site rather than like a browser feature.
+ *
+ * Written outside @layer utilities: ::view-transition-* pseudo-elements live on
+ * the document root, not on any element a utility could target, and Tailwind's
+ * layer ordering would not apply to them anyway.
+ *
+ * The whole block sits behind no-preference. Under reduced motion the default
+ * cross-fade is suppressed further down and navigation becomes instant.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-out 0.25s var(--ease-smooth) both;
+  }
+
+  ::view-transition-new(root) {
+    animation: vt-in 0.42s var(--ease-out-expo) both;
+  }
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+}
+
+/*
  * Honours the operating system's reduced-motion setting. Everything still
  * arrives at its final state — nothing is left invisible.
  */
@@ -1033,6 +1132,16 @@
   .fighter-dot,
   .fighter-runner {
     display: none;
+  }
+
+  /*
+   * A page swap becomes instant rather than fast. The universal rule below
+   * cannot reach these: ::view-transition-* pseudo-elements are not descendants
+   * of any element, so `*` never matches them.
+   */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 
   *,

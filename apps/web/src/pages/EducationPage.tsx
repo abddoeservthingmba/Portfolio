@@ -20,7 +20,11 @@ export function EducationPage() {
 
   return (
     <>
-      <PageHeader title="Education" description="Qualifications in reverse-chronological order." />
+      <PageHeader
+        eyebrow="Where it started"
+        title="Education"
+        description="Qualifications in reverse-chronological order."
+      />
 
       <AsyncSection
         isLoading={education.isLoading}

@@ -21,6 +21,7 @@ export function ExperiencePage() {
   return (
     <>
       <PageHeader
+        eyebrow="The path so far"
         title="Experience"
         description="Roles in reverse-chronological order, with what each one actually involved."
       />

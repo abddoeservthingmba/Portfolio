@@ -22,6 +22,7 @@ export function SkillsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="The toolkit"
         title="Skills"
         description="Languages, frameworks and tools, grouped by the area they belong to."
       />

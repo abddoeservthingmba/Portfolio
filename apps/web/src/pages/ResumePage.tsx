@@ -23,6 +23,7 @@ export function ResumePage() {
   return (
     <>
       <PageHeader
+        eyebrow="One page, downloadable"
         title="Resume"
         description="One version is active at a time. This is always the current one."
       />

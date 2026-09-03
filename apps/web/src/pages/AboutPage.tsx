@@ -22,7 +22,7 @@ export function AboutPage() {
 
   return (
     <>
-      <PageHeader title="About" description={settings?.tagline} />
+      <PageHeader eyebrow="Who you are talking to" title="About" description={settings?.tagline} />
 
       <section className="max-w-prose">
         {settings === null ? (

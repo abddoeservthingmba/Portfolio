@@ -3,6 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+      Archivo Black for display, Inter for everything else.
+
+      Preconnect to both hosts: the stylesheet comes from googleapis.com but the
+      font files come from gstatic.com, and without the second hint that
+      connection is not opened until the CSS has already parsed.
+
+      display=swap, so a slow font never blocks text. The headline reveal in
+      SplitText measures nothing, so a late swap reflows type without breaking
+      the animation.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400..700&display=swap"
+    />
+
     <title>Portfolio</title>
     <meta
       name="description"

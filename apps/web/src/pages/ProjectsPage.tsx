@@ -73,6 +73,7 @@ export function ProjectsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="The work"
         title="Projects"
         description="What each one solved, and what it was built with."
       />

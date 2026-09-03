@@ -62,11 +62,11 @@ export function Hero({
 
       <h1 className="mt-8">
         <SplitReveal>
-          <span className="block text-[clamp(2.75rem,9vw,6.5rem)] font-extrabold leading-[0.9] tracking-[-0.045em] text-text">
+          <span className="display display-xl block text-[clamp(2.75rem,9vw,6.5rem)] leading-[0.88] text-text">
             <SplitText text={firstName ?? ''} />
           </span>
           {rest.length > 0 && (
-            <span className="text-gradient block text-[clamp(2.75rem,9vw,6.5rem)] font-extrabold leading-[0.9] tracking-[-0.045em]">
+            <span className="text-gradient display display-xl block text-[clamp(2.75rem,9vw,6.5rem)] leading-[0.88]">
               <SplitText text={rest.join(' ')} startIndex={1} />
             </span>
           )}

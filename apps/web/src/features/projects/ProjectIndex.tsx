@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '@/components/Badge';
 import { cn } from '@/lib/cn';
+import { ProjectArt, artFor } from './ProjectArt';
 import type { Project } from '@/types/content';
 
 /**
@@ -51,12 +52,30 @@ function ProjectRow({
   index: number;
   onEnter: () => void;
 }) {
+  const art = artFor(project.slug);
+
   return (
     <div
       onPointerEnter={onEnter}
-      className="group/row relative flex items-baseline gap-5 border-b-2 border-border-strong py-8 transition-colors duration-500 sm:gap-8"
+      className="group/row relative flex items-baseline gap-5 border-b-2 border-border-strong py-8 pl-4 transition-colors duration-500 sm:gap-8 sm:pl-6"
+      style={{ '--row-tint': art.base } as React.CSSProperties}
     >
-      <span className="w-9 shrink-0 font-mono text-sm font-bold text-subtle transition-colors duration-300 group-hover/row:text-accent">
+      {/*
+        A rule in the project's own colour, so the index carries per-project
+        identity without becoming a card wall — the editorial reading this list
+        was designed for survives, but the rows stop being uniform grey text.
+      */}
+      <span
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 top-0 w-[3px] origin-bottom scale-y-0 transition-transform duration-500 [transition-timing-function:var(--ease-out-expo)] group-hover/row:scale-y-100"
+        style={{ backgroundColor: art.ink }}
+      />
+
+      {/*
+        The number, boxed. Bare letterspaced mono was the one element on this
+        page not speaking the site's border-and-offset language.
+      */}
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[0.5rem] border-2 border-border-strong font-mono text-xs font-bold text-subtle transition-colors duration-300 group-hover/row:border-accent group-hover/row:text-accent">
         {String(index + 1).padStart(2, '0')}
       </span>
 
@@ -123,22 +142,7 @@ function HoverPreview({
     >
       {project && (
         <div className="h-[13.5rem] w-80 overflow-hidden rounded-card border-2 border-border-strong bg-surface shadow-[var(--shadow-lg)]">
-          {project.imageUrl ? (
-            <img src={project.imageUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="relative flex h-full items-center justify-center">
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    'radial-gradient(70% 90% at 30% 20%, var(--accent-subtle), transparent 70%)',
-                }}
-              />
-              <span className="relative text-6xl font-semibold tracking-tight text-subtle/60">
-                {project.title.charAt(0)}
-              </span>
-            </div>
-          )}
+          <ProjectArt project={project} />
         </div>
       )}
     </div>

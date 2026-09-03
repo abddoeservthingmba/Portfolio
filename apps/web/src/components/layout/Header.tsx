@@ -29,7 +29,10 @@ export function Header({ siteTitle }: { siteTitle: string }) {
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 transition-[background-color,border-color,backdrop-filter] duration-500',
+        // site-header gives the bar its own view-transition name, so a route
+        // change animates the page underneath it while the header holds still.
+        // Without that it is part of the root snapshot and slides with everything.
+        'site-header sticky top-0 z-40 transition-[background-color,border-color,backdrop-filter] duration-500',
         scrolled
           ? 'border-b-2 border-border-strong bg-bg/85 backdrop-blur-xl'
           : 'border-b-2 border-transparent bg-transparent',
@@ -38,6 +41,7 @@ export function Header({ siteTitle }: { siteTitle: string }) {
       <Container className="flex h-16 items-center justify-between gap-4">
         <Link
           to="/"
+          viewTransition
           className="group flex items-center gap-2.5 text-sm font-semibold tracking-tight text-text"
         >
           <span className="grid h-9 w-9 place-items-center rounded-xl border-2 border-border-strong bg-accent text-sm font-extrabold text-accent-fg shadow-[var(--shadow-sm)] transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:rotate-12 group-hover:scale-110">
@@ -105,6 +109,9 @@ function NavItem({ to, label, block = false }: { to: string; label: string; bloc
       to={to}
       // 'end' keeps '/' from matching every route as the active one.
       end={to === '/'}
+      // Opts this navigation into the View Transitions API where the browser
+      // has it. Browsers without it navigate exactly as before.
+      viewTransition
       className={({ isActive }) =>
         cn(
           'relative rounded-pill px-3.5 py-1.5 text-sm transition-colors duration-300',

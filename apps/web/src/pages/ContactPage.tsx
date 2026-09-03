@@ -19,6 +19,7 @@ export function ContactPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Say hello"
         title="Contact"
         description="Send a message below, or email directly — whichever is easier."
       />

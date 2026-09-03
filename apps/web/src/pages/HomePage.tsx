@@ -204,7 +204,7 @@ export function HomePage() {
         <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
           <Reveal>
             <Card className="p-5 sm:p-7">
-              <h2 className="text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold leading-tight tracking-[-0.035em] text-text">
+              <h2 className="display display-xl text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.02] text-text">
                 You made it to the bottom.
               </h2>
               <p className="mt-3 max-w-prose text-muted">

@@ -21,6 +21,7 @@ export function CertificationsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Verified elsewhere"
         title="Certifications"
         description="Most recent first. Where a credential can be verified, the link goes to the issuer."
       />
