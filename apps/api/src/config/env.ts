@@ -41,11 +41,24 @@ const envSchema = z.object({
    * the variable was missing, which is a confusing way to fail. Setting
    * ALLOWED_ORIGINS still overrides this entirely.
    */
-  ALLOWED_ORIGINS: z.string().default('http://localhost:5173,https://abdsportfoilo.netlify.app'),
+  ALLOWED_ORIGINS: z.string().default(
+    [
+      'http://localhost:5173',
+      // The custom domain, apex and www, plus the Netlify subdomain the site
+      // is still served from. All three are live origins: a browser sends
+      // whichever one the visitor typed, and an origin missing from this list
+      // is rejected with a 403 that looks nothing like a CORS problem in the
+      // network tab.
+      'https://sulthanabdullah.com',
+      'https://www.sulthanabdullah.com',
+      'https://sulthanabdullahkhan.netlify.app',
+    ].join(','),
+  ),
 
   // The public site's own origin, used to build absolute URLs in the sitemap.
   // Not the API's origin — crawlers must be sent to the site, not here.
-  PUBLIC_SITE_URL: z.string().default('https://abdsportfoilo.netlify.app'),
+  // One canonical host, so crawlers are never given two URLs for one page.
+  PUBLIC_SITE_URL: z.string().default('https://sulthanabdullah.com'),
 
   // Public write routes (the contact endpoint) — window in ms, ceiling per window.
   RATE_LIMIT_WINDOW: z.coerce
