@@ -56,13 +56,21 @@
     # properties inline for the tilt and stagger effects.
     #
     # connect-src must list the API and Supabase, or every request is blocked.
+    # The Supabase host here is load-bearing and easy to miss when the project
+    # moves: the browser reaches Supabase directly for the administrator
+    # sign-in, so a stale hostname blocks every sign-in with a CSP violation
+    # and no server-side error to find. It must match VITE_SUPABASE_URL.
+    #
+    # Google Fonts is two hosts, not one: the stylesheet comes from
+    # googleapis.com (style-src) and the font files from gstatic.com
+    # (font-src). Listing only one silently drops the display face.
     Content-Security-Policy = """
       default-src 'self';
       script-src 'self';
-      style-src 'self' 'unsafe-inline';
-      img-src 'self' data: blob: https://dbmjasavjofnrhwyymwj.supabase.co;
-      font-src 'self' data:;
-      connect-src 'self' https://portfolio-y4fy.onrender.com https://dbmjasavjofnrhwyymwj.supabase.co;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      img-src 'self' data: blob: https://nsuvlmxvgnctrakahpsp.supabase.co;
+      font-src 'self' data: https://fonts.gstatic.com;
+      connect-src 'self' https://portfolio-y4fy.onrender.com https://nsuvlmxvgnctrakahpsp.supabase.co;
       frame-ancestors 'none';
       base-uri 'self';
       form-action 'self'
