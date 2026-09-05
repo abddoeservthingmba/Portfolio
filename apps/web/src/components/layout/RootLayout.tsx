@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { Container } from '@/components/Container';
 import { ScrollProgress } from '@/components/motion/ScrollProgress';
+import { PaletteSwitcher } from '@/features/theme/PaletteSwitcher';
 import { useAsync } from '@/lib/useAsync';
 import { getSettings } from '@/lib/content';
 
@@ -49,6 +50,14 @@ export function RootLayout() {
       </main>
 
       <Footer settings={settings} />
+
+      {/*
+        Fixed to the bottom-right corner, so it is reachable from any scroll
+        position without spending permanent layout on itself. Rendered last:
+        it is the topmost thing in the shell and should not sit inside the
+        footer's stacking context.
+      */}
+      <PaletteSwitcher />
     </div>
   );
 }

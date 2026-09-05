@@ -36,6 +36,14 @@
         if (stored === 'light' || stored === 'dark') {
           document.documentElement.setAttribute('data-theme', stored);
         }
+        // The palette is a second axis, and needs the same pre-paint treatment:
+        // applied from React it would land after the first frame and every load
+        // would flash Ember before settling. Ember itself is the absence of the
+        // attribute, so it is not listed here.
+        var palette = localStorage.getItem('palette');
+        if (palette === 'tide' || palette === 'moss' || palette === 'plum') {
+          document.documentElement.setAttribute('data-palette', palette);
+        }
       } catch (_) {
         /* private mode or blocked storage — fall back to the system palette */
       }

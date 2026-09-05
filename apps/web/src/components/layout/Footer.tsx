@@ -76,7 +76,12 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
           </nav>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-border-strong/20 py-6">
+        {/*
+          The extra bottom padding clears the palette switcher, which is fixed
+          to the bottom-right corner and would otherwise sit on top of this row
+          once the page is scrolled to the end.
+        */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-border-strong/20 pb-20 pt-6">
           <p className="text-xs font-medium text-footer-muted">
             © {year} {settings?.siteTitle ?? 'Portfolio'}
           </p>

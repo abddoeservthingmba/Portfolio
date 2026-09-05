@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '@/components/Badge';
 import { cn } from '@/lib/cn';
-import { ProjectArt, artFor } from './ProjectArt';
+import { ProjectArt } from './ProjectArt';
+import { artFor } from './coverArt';
 import type { Project } from '@/types/content';
 
 /**
