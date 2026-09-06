@@ -32,6 +32,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The API's types come from the generated Prisma client. Until
+      # `prisma generate` has run, @prisma/client is only a shim whose types
+      # re-export from '.prisma/client', a path that does not exist yet — so
+      # typecheck cannot be the first step that touches it.
+      #
+      # It works on a developer machine because the client was generated there
+      # at some point and persists in the store. It has never worked here,
+      # which is why every run of this workflow has failed at Typecheck.
+      #
+      # The api build script generates the client too, but Build runs last and
+      # is never reached.
+      - name: Generate Prisma client
+        run: pnpm --filter @portfolio-cms/api exec prisma generate
+
       - name: Typecheck
         run: pnpm typecheck
 
