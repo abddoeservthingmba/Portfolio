@@ -22,6 +22,12 @@ Built against **Portfolio CMS Program Blueprint v1.0**. Section references below
 
 The site runs on live data from Supabase. Content is managed entirely through the admin portal at `/admin` — no redeploy is needed to publish a project, add a certification or replace the resume.
 
+### Content
+
+The published resume is the source of truth for what the site claims. `apps/api/prisma/seed.ts` holds that content in version control — seven projects, two roles, two qualifications, two certifications and 57 skills, tracking the 10 September 2026 resume committed at `apps/api/assets/resume/`. Small corrections go through the admin portal; a change large enough to want reviewed in a diff goes through the seed, which is idempotent and safe to re-run.
+
+Three projects carry a cover screenshot of the live product rather than generated art: **Ascension**, **Audiophilic** and this site. The images live at `apps/api/assets/projects/` and are published by `projects:images` (below). The four enterprise projects have no public URL to screenshot, so they keep the generated covers from `coverArt.ts` — which is the normal case that file was written for, not a fallback.
+
 ---
 
 ## Architecture
@@ -125,6 +131,9 @@ portfolio-cms/
 │     │  ├─ middleware/         # cors, requestId, logger, rateLimit, validate, errorHandler
 │     │  ├─ config/             # env parsing, validated at startup
 │     │  └─ lib/                # logger, typed errors, response envelope
+│     ├─ prisma/                # schema, migrations, seed — the content source of truth
+│     ├─ scripts/               # one-off operators: admin, buckets, resume, project covers
+│     ├─ assets/                # binaries published to storage: the resume PDF, project covers
 │     └─ tests/
 ├─ .github/workflows/ci.yml
 └─ package.json                 # pnpm workspace root
@@ -172,6 +181,16 @@ Run the quality gate locally before opening a pull request. That is what keeps C
 | `pnpm format:check` | Verify formatting without changing files         |
 | `pnpm test`         | Vitest — unit, component and API integration      |
 
+Operator scripts, all run from `apps/api` and all needing `apps/api/.env`:
+
+| Command                | Effect                                                          |
+| ---------------------- | --------------------------------------------------------------- |
+| `db:seed`              | Apply the content in `prisma/seed.ts`. Idempotent               |
+| `storage:init`         | Create the `images`, `certificates` and `resume` buckets        |
+| `admin:create`         | Create the single administrator                                 |
+| `resume:publish`       | Upload the committed resume PDF and make it the active version  |
+| `projects:images`      | Upload the committed project covers and attach them to projects |
+
 ### Publishing the resume
 
 The admin portal is the normal way to replace the resume. This script covers the
@@ -196,6 +215,27 @@ Needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `DATABASE_URL` in
 `apps/api/.env`, and the buckets to exist (`storage:init`). The bytes are
 sniffed, not trusted: anything that is not actually a PDF is refused, as it is
 on the upload route.
+
+### Publishing the project covers
+
+Same idea, for the three screenshots at `apps/api/assets/projects/`. They are in
+version control rather than only in a bucket, so a rebuilt bucket or a fresh
+Supabase project can be brought back to the same state without hunting for the
+original captures.
+
+```bash
+pnpm --filter @portfolio-cms/api projects:images
+```
+
+The slug-to-file mapping is a list inside the script rather than a directory
+scan — dropping a stray file into the folder cannot silently repoint a cover,
+and the mapping shows up in a diff. Run `db:seed` first: the script attaches
+covers to projects, it does not create them, and it reports any slug it could
+not find instead of inventing one.
+
+Covers are 1600×900 WebP. That shape is not arbitrary — the card art fills a
+16:9 box, so anything else gets cropped by `object-cover` and the interesting
+part of the screenshot is the part that goes missing.
 
 ---
 
@@ -397,6 +437,18 @@ $env:NODE_OPTIONS="--use-system-ca"   # PowerShell
 ```
 
 CI and Render have no such proxy and need nothing.
+
+The second gotcha is corepack. If it resolves a pnpm major newer than the one
+that wrote `pnpm-lock.yaml`, any `pnpm <script>` aborts with
+`ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` — it wants to purge and reinstall
+`node_modules` first, and will not do that without a terminal to ask. Nothing is
+broken; it is a version mismatch, not a corrupt install. Either pin the matching
+pnpm, or run the underlying binary directly while it is in the way:
+
+```bash
+apps/api/node_modules/.bin/tsx prisma/seed.ts   # instead of pnpm db:seed
+node_modules/.bin/tsc --noEmit                  # instead of pnpm typecheck
+```
 
 ### Before the first deploy
 
