@@ -172,6 +172,31 @@ Run the quality gate locally before opening a pull request. That is what keeps C
 | `pnpm format:check` | Verify formatting without changing files         |
 | `pnpm test`         | Vitest — unit, component and API integration      |
 
+### Publishing the resume
+
+The admin portal is the normal way to replace the resume. This script covers the
+two cases it cannot: the first version, which has to be in place before there is
+a portal to sign into, and replacing the file from a checkout without a browser.
+
+```bash
+# the PDF committed at apps/api/assets/resume/
+pnpm --filter @portfolio-cms/api resume:publish
+
+# any other PDF, with its own title
+pnpm --filter @portfolio-cms/api resume:publish -- ./Resume_May_2027.pdf --title "Resume, May 2027"
+```
+
+It uploads to the `resume` bucket and records the version as the active one in a
+single transaction — exactly one version is active at a time, and that is the one
+the public page serves. The object path is derived from the file name rather than
+generated, so re-running replaces the same object and updates the same row
+instead of accumulating a version per run.
+
+Needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `DATABASE_URL` in
+`apps/api/.env`, and the buckets to exist (`storage:init`). The bytes are
+sniffed, not trusted: anything that is not actually a PDF is refused, as it is
+on the upload route.
+
 ---
 
 ## Environment variables

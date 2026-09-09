@@ -16,7 +16,8 @@
     "db:seed": "cross-env NODE_OPTIONS=--use-system-ca prisma db seed",
     "db:studio": "cross-env NODE_OPTIONS=--use-system-ca prisma studio",
     "admin:create": "cross-env NODE_OPTIONS=--use-system-ca tsx scripts/create-admin.ts",
-    "storage:init": "cross-env NODE_OPTIONS=--use-system-ca tsx scripts/create-buckets.ts"
+    "storage:init": "cross-env NODE_OPTIONS=--use-system-ca tsx scripts/create-buckets.ts",
+    "resume:publish": "cross-env NODE_OPTIONS=--use-system-ca tsx scripts/publish-resume.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
