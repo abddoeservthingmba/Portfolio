@@ -29,7 +29,9 @@ const { isStorageConfigured, uploadObject } = await import('../src/lib/storageCl
 const DEFAULT_FILE = fileURLToPath(
   new URL('../assets/resume/sulthan-abdullah-khan-resume-2026-09-10.pdf', import.meta.url),
 );
-const DEFAULT_TITLE = 'Sulthan Abdullah Khan — Software Engineer (September 2026)';
+// Matches the naming already in the database, since the title is what the
+// public page prints as the card's heading. --title overrides it.
+const DEFAULT_TITLE = 'Sulthan_Abdullah_Khan_Resume_10-Sep-2026';
 
 // Matches the resume rule in uploads.service.ts. A resume is a document, not a
 // scan album, and the column that holds the title is capped at 150.
