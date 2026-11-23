@@ -71,7 +71,7 @@ export function ProjectCard({ project }: { project: Project }) {
  */
 function ProjectThumbnail({ project }: { project: Project }) {
   return (
-    <div className="relative aspect-video w-full overflow-hidden border-b-2 border-border-strong">
+    <div className="relative aspect-video w-full overflow-hidden border-b-2 border-border-strong [&>*]:transition-transform [&>*]:duration-700 [&>*]:ease-[var(--ease-out-expo)] group-hover/card:[&>*]:scale-105">
       <ProjectArt project={project} />
     </div>
   );

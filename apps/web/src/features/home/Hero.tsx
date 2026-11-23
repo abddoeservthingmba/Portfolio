@@ -1,139 +1,166 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { buttonStyles } from '@/components/buttonStyles';
-import { cn } from '@/lib/cn';
+import { Card } from '@/components/Card';
 import { Skeleton } from '@/components/Skeleton';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitText, SplitReveal } from '@/components/motion/SplitText';
-import { Magnetic } from '@/components/motion/Magnetic';
-import type { SiteSettings } from '@/types/content';
+import { TiltCard } from '@/components/motion/TiltCard';
+import { CountUp } from '@/components/motion/CountUp';
+import type { ResumeVersion, SiteSettings } from '@/types/content';
+
+export interface HeroStats {
+  /** Whole years since the earliest role, or null when no roles are listed. */
+  years: number | null;
+  projects: number;
+  skills: number;
+  certifications: number;
+}
 
 /**
- * The hero renders its own structure immediately and fills in text as settings
- * arrive, rather than blocking the whole page on one request (C3 cold start).
+ * The first screen a recruiter or engineering manager sees.
+ *
+ * Built to answer four questions in the first few seconds: who this is, what
+ * role they do, where they are, and how to get the résumé or get in touch. The
+ * at-a-glance card carries the numbers a reviewer scans for, counted up on
+ * arrival. Every figure is computed from live content.
  */
 export function Hero({
   settings,
+  resume,
+  stats,
   isLoading,
 }: {
   settings: SiteSettings | null;
+  resume: ResumeVersion | null;
+  stats: HeroStats;
   isLoading: boolean;
 }) {
   if (isLoading) {
     return (
-      <section className="relative py-10">
+      <section className="grid gap-12 py-12 lg:grid-cols-[1.35fr_1fr] lg:items-center">
         <div className="space-y-5">
-          <Skeleton className="h-9 w-52 rounded-pill" />
-          <Skeleton className="h-20 w-3/4" />
-          <Skeleton className="h-20 w-1/2" />
-          <Skeleton className="h-5 w-full max-w-prose" />
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-16 w-3/4" />
+          <Skeleton className="h-6 w-full max-w-prose" />
+          <Skeleton className="h-5 w-2/3" />
         </div>
+        <Skeleton className="h-64 w-full" />
       </section>
     );
   }
 
-  const [firstName, ...rest] = (settings?.siteTitle ?? 'Portfolio').split(' ');
+  const glance: Array<[string, ReactNode]> = [
+    ...(settings?.location ? [['Based in', settings.location] as [string, ReactNode]] : []),
+    ...(stats.years !== null
+      ? [['Experience', <CountUp key="years" value={stats.years} suffix="+ years" />] as [string, ReactNode]]
+      : []),
+    ['Projects', <CountUp key="projects" value={stats.projects} />],
+    ['Skills', <CountUp key="skills" value={stats.skills} />],
+    ['Certifications', <CountUp key="certs" value={stats.certifications} />],
+  ];
+
+  const name = settings?.siteTitle ?? 'Portfolio';
 
   return (
-    <section className="relative isolate py-8 sm:py-14">
-      <div className="aurora" aria-hidden="true" />
+    <section className="relative isolate grid gap-12 py-10 sm:py-16 lg:grid-cols-[1.35fr_1fr] lg:items-center">
+      <HeroShapes />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div>
         <Reveal index={0}>
-          <span className="sticker inline-flex items-center gap-2 rounded-pill border-2 border-border-strong bg-accent-2 px-4 py-2 text-sm font-semibold text-accent-2-fg shadow-[var(--shadow-sm)]">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+          <p className="inline-flex items-center gap-2 text-sm font-medium text-muted">
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
             </span>
             Open to opportunities
-          </span>
+          </p>
         </Reveal>
 
-        {settings?.location && (
-          <Reveal index={1}>
-            <span
-              className="sticker inline-flex rounded-pill border-2 border-border-strong bg-surface px-4 py-2 text-sm font-semibold text-text shadow-[var(--shadow-sm)]"
-              style={{ '--tilt': '2.5deg' } as React.CSSProperties}
-            >
-              {settings.location}
-            </span>
+        <h1 className="display mt-5 text-[clamp(2.5rem,6.5vw,4.75rem)] leading-[1.02] text-text">
+          <SplitReveal>
+            <SplitText text={name} />
+          </SplitReveal>
+        </h1>
+
+        {settings?.tagline && (
+          <Reveal index={2} as="p" className="mt-5 text-lg font-medium text-text sm:text-xl">
+            {settings.tagline}
           </Reveal>
         )}
+
+        {settings?.bio && (
+          <Reveal index={3} as="p" className="mt-4 max-w-prose leading-relaxed text-muted">
+            {settings.bio.split('\n\n')[0]}
+          </Reveal>
+        )}
+
+        <Reveal index={4} className="mt-9 flex flex-wrap items-center gap-3">
+          <Link to="/projects" className={buttonStyles('primary', 'lg')}>
+            View projects
+          </Link>
+
+          {resume && (
+            <a
+              href={resume.fileUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className={buttonStyles('secondary', 'lg')}
+            >
+              Download résumé
+            </a>
+          )}
+
+          <a href="#contact" className={buttonStyles('ghost', 'lg')}>
+            Contact
+          </a>
+        </Reveal>
       </div>
 
-      <h1 className="mt-8">
-        <SplitReveal>
-          <span className="display display-xl block text-[clamp(2.75rem,9vw,6.5rem)] leading-[0.88] text-text">
-            <SplitText text={firstName ?? ''} />
-          </span>
-          {rest.length > 0 && (
-            <span className="text-gradient display display-xl block text-[clamp(2.75rem,9vw,6.5rem)] leading-[0.88]">
-              <SplitText text={rest.join(' ')} startIndex={1} />
-            </span>
-          )}
-        </SplitReveal>
-      </h1>
+      <Reveal index={5} variant="scale">
+        <TiltCard>
+          <Card className="p-6 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-subtle">
+              At a glance
+            </p>
 
-      {settings?.tagline && (
-        <Reveal
-          index={2}
-          as="p"
-          className="mt-7 max-w-2xl text-lg font-medium text-text sm:text-xl"
-        >
-          {settings.tagline}
-        </Reveal>
-      )}
+            <dl className="mt-5 divide-y divide-border">
+              {glance.map(([label, value]) => (
+                <div key={label} className="flex items-baseline justify-between gap-6 py-3.5">
+                  <dt className="text-sm text-muted">{label}</dt>
+                  <dd className="display text-base text-text">{value}</dd>
+                </div>
+              ))}
+            </dl>
 
-      {settings?.bio && (
-        <Reveal index={3} as="p" className="mt-5 max-w-prose leading-relaxed text-muted">
-          {settings.bio.split('\n\n')[0]}
-        </Reveal>
-      )}
-
-      <Reveal index={4} className="mt-10 flex flex-wrap items-center gap-4">
-        <Magnetic>
-          <Link
-            to="/projects"
-            className={cn(buttonStyles('primary', 'lg'), 'group')}
-            // A slow, occasional nudge. Constant movement stops being a signal.
-            style={{ animation: 'wiggle 6s var(--ease-smooth) infinite' }}
-          >
-            See the work
-            <span
-              aria-hidden="true"
-              className="transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:translate-x-1.5"
-            >
-              →
-            </span>
-          </Link>
-        </Magnetic>
-
-        <Magnetic>
-          {/*
-            An in-page jump to the final stage rather than a route change — the
-            contact form is the end of this page now, not somewhere else.
-          */}
-          <a href="#contact" className={buttonStyles('secondary', 'lg')}>
-            Say hello
-          </a>
-        </Magnetic>
-      </Reveal>
-
-      {/*
-        The cue that this page is travelled rather than read. Hidden from
-        assistive tech: it describes a gesture, and the same destinations are
-        already in the header and the progress rail.
-      */}
-      <Reveal index={5} className="mt-16 hidden sm:block">
-        <span
-          aria-hidden="true"
-          className="scroll-cue inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.24em] text-subtle"
-        >
-          <span className="scroll-cue-track">
-            <span className="scroll-cue-dot" />
-          </span>
-          Scroll to begin
-        </span>
+            {settings?.emailPublic && (
+              <a
+                href={`mailto:${settings.emailPublic}`}
+                className="mt-4 block truncate text-sm font-medium text-accent underline-offset-4 hover:underline"
+              >
+                {settings.emailPublic}
+              </a>
+            )}
+          </Card>
+        </TiltCard>
       </Reveal>
     </section>
+  );
+}
+
+/**
+ * Drifting geometric forms behind the hero. Pure decoration: hidden from
+ * assistive tech, inert to the pointer, and styled per visual style in
+ * index.css (solid primaries for Geometric, soft orbs for Glass, none for
+ * Minimal).
+ */
+function HeroShapes() {
+  return (
+    <div aria-hidden="true" className="hero-shapes pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      <span className="shape shape-ring" style={{ top: '4%', right: '8%', animationDelay: '0s' }} />
+      <span className="shape shape-square" style={{ top: '58%', right: '34%', animationDelay: '-3s' }} />
+      <span className="shape shape-triangle" style={{ top: '70%', right: '6%', animationDelay: '-6s' }} />
+      <span className="shape shape-dot" style={{ top: '14%', right: '40%', animationDelay: '-2s' }} />
+    </div>
   );
 }
