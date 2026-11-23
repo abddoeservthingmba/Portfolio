@@ -1,0 +1,113 @@
+/*
+ * Motion and decoration layered over the token system in index.css.
+ *
+ * Everything here is either decorative (hidden from assistive tech) or a
+ * transition that already exists for accessibility reasons. The global
+ * reduced-motion rule in index.css still applies to all of it: animations
+ * collapse to their final frame, so nothing is left invisible.
+ */
+
+/* --- Hero shapes ------------------------------------------------------- */
+
+.shape {
+  position: absolute;
+  display: block;
+  will-change: transform;
+  animation: shape-drift 14s var(--ease-smooth) infinite alternate;
+}
+
+.shape-ring {
+  width: 9rem;
+  height: 9rem;
+  border-radius: 999px;
+  border: 1.1rem solid var(--accent-2);
+}
+
+.shape-square {
+  width: 4.5rem;
+  height: 4.5rem;
+  background: var(--accent-3);
+  border: 2px solid var(--border-strong);
+  animation-name: shape-spin;
+  animation-duration: 22s;
+}
+
+.shape-triangle {
+  width: 0;
+  height: 0;
+  border-left: 3.5rem solid transparent;
+  border-right: 3.5rem solid transparent;
+  border-bottom: 6rem solid var(--accent);
+  opacity: 0.9;
+}
+
+.shape-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* Glass: the same forms become soft, blurred light. */
+:root[data-style='glass'] .shape {
+  filter: blur(28px);
+  opacity: 0.55;
+}
+
+:root[data-style='glass'] .shape-ring {
+  border-color: var(--accent-2);
+}
+
+/* Minimal: no decoration at all. Structure carries the page. */
+:root[data-style='minimal'] .hero-shapes {
+  display: none;
+}
+
+@keyframes shape-drift {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(-18px, 26px, 0) rotate(8deg);
+  }
+}
+
+@keyframes shape-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Section rule ------------------------------------------------------ */
+
+/* The short accent rule before a section eyebrow draws in on reveal. */
+.js .grow-line {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.9s var(--ease-out-expo) 0.15s;
+}
+
+.js [data-revealed] .grow-line {
+  transform: scaleX(1);
+}
+
+/* --- Theme change ------------------------------------------------------ */
+
+/*
+ * Applied for a moment while the theme changes (see lib/themeTransition.ts).
+ * Colour only, so the layout never moves during the cross-fade.
+ */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition:
+    background-color 0.6s var(--ease-smooth),
+    border-color 0.6s var(--ease-smooth),
+    color 0.6s var(--ease-smooth),
+    fill 0.6s var(--ease-smooth),
+    box-shadow 0.6s var(--ease-smooth) !important;
+}

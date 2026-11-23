@@ -1,25 +1,25 @@
 <!doctype html>
-<html lang="en" data-theme="">
+<html lang="en" data-theme="" data-style="geometric">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!--
-      Archivo Black for display, Inter for everything else.
+      Three type pairings, one per visual style, plus Inter for body text.
+      Sora (Glass), Inter Tight (Minimal) and Unbounded (Geometric) are the
+      display faces; each style block in index.css chooses its own.
 
       Preconnect to both hosts: the stylesheet comes from googleapis.com but the
       font files come from gstatic.com, and without the second hint that
       connection is not opened until the CSS has already parsed.
 
-      display=swap, so a slow font never blocks text. The headline reveal in
-      SplitText measures nothing, so a late swap reflows type without breaking
-      the animation.
+      display=swap, so a slow font never blocks text.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400..700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400..800&family=Inter+Tight:wght@400..800&family=Unbounded:wght@400..900&family=Inter:wght@400..700&display=swap"
     />
 
     <title>Portfolio</title>
@@ -28,24 +28,23 @@
       content="Portfolio — projects, experience, skills and certifications."
     />
     <script>
-      // Applies the stored theme before first paint so the page never flashes
-      // the wrong palette. Kept inline and tiny for that reason.
+      // Applies the stored theme and style before first paint so the page never
+      // flashes the wrong look. Kept inline and tiny for that reason.
       document.documentElement.classList.add('js');
       try {
         var stored = localStorage.getItem('theme');
         if (stored === 'light' || stored === 'dark') {
           document.documentElement.setAttribute('data-theme', stored);
         }
-        // The palette is a second axis, and needs the same pre-paint treatment:
-        // applied from React it would land after the first frame and every load
-        // would flash Ember before settling. Ember itself is the absence of the
-        // attribute, so it is not listed here.
-        var palette = localStorage.getItem('palette');
-        if (palette === 'tide' || palette === 'moss' || palette === 'plum') {
-          document.documentElement.setAttribute('data-palette', palette);
+        // The visual style is a second axis and needs the same pre-paint
+        // treatment, or every load would flash Glass before settling on the
+        // chosen style.
+        var style = localStorage.getItem('style');
+        if (style === 'glass' || style === 'minimal' || style === 'geometric') {
+          document.documentElement.setAttribute('data-style', style);
         }
       } catch (_) {
-        /* private mode or blocked storage — fall back to the system palette */
+        /* private mode or blocked storage: fall back to the default style */
       }
     </script>
   </head>

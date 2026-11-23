@@ -19,19 +19,9 @@ export function PageHeader({
 }) {
   return (
     <header className="relative mb-12">
-      {/*
-        The same marker the homepage stages carry, so an inner route reads as
-        part of the journey rather than as a different site. It was previously a
-        bare line of letterspaced text, which is the one thing on the page that
-        looked unfinished next to the stage labels.
-      */}
       {eyebrow && (
-        <Reveal index={0} as="p" className="mb-5">
-          <span
-            className="episode-tag sticker text-text"
-            style={{ '--tilt': '-1.5deg' } as React.CSSProperties}
-          >
-            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
+        <Reveal index={0} as="p" className="mb-4">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
             {eyebrow}
           </span>
         </Reveal>

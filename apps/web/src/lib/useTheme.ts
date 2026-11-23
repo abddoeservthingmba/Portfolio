@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { animateThemeChange } from './themeTransition';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -24,8 +25,11 @@ function readStored(): Theme {
  */
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(readStored);
+  const applied = useRef<Theme | null>(null);
 
   useEffect(() => {
+    if (applied.current !== null && applied.current !== theme) animateThemeChange();
+    applied.current = theme;
     const root = document.documentElement;
 
     if (theme === 'system') {

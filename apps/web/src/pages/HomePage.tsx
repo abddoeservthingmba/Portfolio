@@ -1,8 +1,14 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useAsync } from '@/lib/useAsync';
 import { useReveal } from '@/lib/useReveal';
-import { useScrollStage } from '@/lib/useScrollStage';
-import { getExperience, getProjects, getSkills } from '@/lib/content';
+import {
+  getCertifications,
+  getExperience,
+  getProjects,
+  getResume,
+  getSkills,
+} from '@/lib/content';
 import { useSiteSettings } from '@/lib/useSiteSettings';
 import { useDocumentMeta } from '@/lib/useDocumentMeta';
 import { AsyncSection, EmptyState } from '@/components/States';
@@ -15,52 +21,45 @@ import { ExperienceTimeline } from '@/features/experience/ExperienceTimeline';
 import { SkillCategory } from '@/features/skills/SkillCategory';
 import { groupByCategory } from '@/features/skills/groupByCategory';
 import { ContactForm } from '@/features/contact/ContactForm';
-import { Hero } from '@/features/home/Hero';
-import { SkillMarquee } from '@/features/home/SkillMarquee';
-import { Stage, StageLabel } from '@/features/home/Stage';
-import { StageHUD } from '@/features/home/StageHUD';
-import { SceneLayer } from '@/features/home/scene/SceneLayer';
-import { CharacterSelect } from '@/features/home/character/CharacterSelect';
-import { CursorCompanion } from '@/features/home/character/CursorCompanion';
-import { BackgroundRunner } from '@/features/home/character/BackgroundRunner';
-import { useCharacter } from '@/features/home/character/useCharacter';
-import { useFighterLayer } from '@/features/home/character/useFighterLayer';
+import { Hero, type HeroStats } from '@/features/home/Hero';
+import type { Experience } from '@/types/content';
 
 /**
- * The homepage as a journey: five stages travelled in order, ending at the
- * contact form rather than at a link to it.
+ * The homepage: a short professional summary, then the evidence behind it.
  *
- * Every stage renders a component that already existed and is already tested.
- * The new work is the frame — the stage sequence, the progress rail and the
- * WebGL field behind it — not a reimplementation of the content.
- *
- * The other routes are untouched and the header still links to all of them, so
- * nothing on this site is reachable only by scrolling to the bottom.
+ * Order matters for a reader who gives the page under a minute. The summary and
+ * the at-a-glance facts come first, then selected work, the employment record,
+ * the skills, and finally a way to get in touch. Every section links to the
+ * full page it summarises, so nothing is reachable only from here.
  */
 
-const STAGES = [
-  { id: 'start', label: 'Start' },
-  { id: 'work', label: 'Work' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'path', label: 'Path' },
-  { id: 'contact', label: 'Contact' },
-];
+/** Whole years between the earliest role and today. Null when no roles exist. */
+function yearsSince(entries: Experience[]): number | null {
+  if (entries.length === 0) return null;
+  const earliest = Math.min(...entries.map((entry) => Date.parse(entry.startDate)));
+  if (Number.isNaN(earliest)) return null;
+  const years = (Date.now() - earliest) / (365.25 * 24 * 60 * 60 * 1000);
+  return Math.max(0, Math.floor(years));
+}
 
 export function HomePage() {
   // Fetched once by RootLayout; sharing it keeps the header and hero in step.
   const settings = useSiteSettings();
-  const featured = useAsync(() => getProjects({ featured: true }), []);
+  const projects = useAsync(() => getProjects(), []);
   const skills = useAsync(() => getSkills(), []);
   const experience = useAsync(() => getExperience(), []);
+  const certifications = useAsync(() => getCertifications(), []);
+  const resume = useAsync(() => getResume(), []);
 
   // Rescan once each async section has rendered its content.
-  useReveal([settings, featured.data, skills.data, experience.data]);
-  const activeStage = useScrollStage(STAGES.length);
-
-  const { characterId, choose } = useCharacter();
-  // Two separate answers: replacing the cursor needs a cursor to replace, the
-  // background runner only needs motion to be welcome.
-  const fighter = useFighterLayer();
+  useReveal([
+    settings,
+    projects.data,
+    skills.data,
+    experience.data,
+    certifications.data,
+    resume.data,
+  ]);
 
   useDocumentMeta({
     title: 'Portfolio',
@@ -68,62 +67,39 @@ export function HomePage() {
       settings?.tagline ?? 'Projects, experience, skills and certifications in one place.',
   });
 
+  const featured = projects.data?.filter((project) => project.featured) ?? null;
+
+  const stats: HeroStats = {
+    years: experience.data ? yearsSince(experience.data) : null,
+    projects: projects.data?.length ?? 0,
+    skills: skills.data?.length ?? 0,
+    certifications: certifications.data?.length ?? 0,
+  };
+
   return (
     <>
-      {/*
-        Fixed, behind everything, pointer-events: none. It renders nothing until
-        the browser is idle and the device qualifies, so most visitors never
-        load it — which is why every stage below is designed to look finished
-        without it.
-      */}
-      <SceneLayer />
-      <StageHUD stages={STAGES} active={activeStage} />
+      <Hero
+        settings={settings}
+        resume={resume.data ?? null}
+        stats={stats}
+        isLoading={settings === null}
+      />
 
-      {/* The chosen fighter, running the length of the page behind everything. */}
-      {fighter.runner && <BackgroundRunner characterId={characterId} />}
-      {fighter.cursor && <CursorCompanion characterId={characterId} />}
-
-      <Stage index={0} id="start" className="pt-0">
-        <Hero settings={settings} isLoading={settings === null} />
-
-        <div className="reveal mt-12" style={{ '--i': 6 } as React.CSSProperties}>
-          <CharacterSelect value={characterId} onChange={choose} />
-        </div>
-      </Stage>
-
-      {/*
-        No defer-paint on the marquee stage: content-visibility implies paint
-        containment, which would clip the marquee's full-bleed band back to the
-        container.
-      */}
-      <Stage index={1} id="work">
-        <StageLabel index={1} label="Selected work" />
-
-        <Reveal>
-          <SectionHeading
-            title="Things I have built"
-            action={
-              <Link
-                to="/projects"
-                className="group inline-flex items-center gap-1.5 text-sm font-medium text-accent"
-              >
-                All projects
-                <span
-                  aria-hidden="true"
-                  className="transition-transform duration-400 [transition-timing-function:var(--ease-spring)] group-hover:translate-x-1"
-                >
-                  →
-                </span>
-              </Link>
-            }
-          />
-        </Reveal>
-
+      <Section
+        id="work"
+        eyebrow="Selected work"
+        title="Projects"
+        action={
+          <Link to="/projects" className="text-sm font-medium text-accent underline-offset-4 hover:underline">
+            All projects
+          </Link>
+        }
+      >
         <AsyncSection
-          isLoading={featured.isLoading}
-          error={featured.error}
-          data={featured.data}
-          onRetry={featured.retry}
+          isLoading={projects.isLoading}
+          error={projects.error}
+          data={featured}
+          onRetry={projects.retry}
           skeleton={<SkeletonCards count={3} />}
           empty={
             <EmptyState
@@ -132,17 +108,38 @@ export function HomePage() {
             />
           }
         >
-          {(projects) => <ProjectGrid projects={projects} />}
+          {(list) => <ProjectGrid projects={list} />}
         </AsyncSection>
-      </Stage>
+      </Section>
 
-      <Stage index={2} id="skills">
-        <StageLabel index={2} label="What I work with" />
+      <Section
+        id="experience"
+        eyebrow="Experience"
+        title="Employment"
+        action={
+          <Link to="/experience" className="text-sm font-medium text-accent underline-offset-4 hover:underline">
+            Full history
+          </Link>
+        }
+      >
+        <AsyncSection
+          isLoading={experience.isLoading}
+          error={experience.error}
+          data={experience.data}
+          onRetry={experience.retry}
+          skeleton={<SkeletonCards count={2} />}
+          empty={<EmptyState title="No experience listed yet" description="" />}
+        >
+          {(entries) => (
+            <Reveal>
+              {/* The three most recent. The full list has its own route. */}
+              <ExperienceTimeline entries={entries.slice(0, 3)} />
+            </Reveal>
+          )}
+        </AsyncSection>
+      </Section>
 
-        <div className="mb-12">
-          <SkillMarquee skills={skills.data ?? []} />
-        </div>
-
+      <Section id="skills" eyebrow="Skills" title="Technical skills">
         <AsyncSection
           isLoading={skills.isLoading}
           error={skills.error}
@@ -161,54 +158,14 @@ export function HomePage() {
             </div>
           )}
         </AsyncSection>
-      </Stage>
+      </Section>
 
-      <Stage index={3} id="path">
-        <StageLabel index={3} label="How I got here" />
-
-        <Reveal>
-          <SectionHeading
-            title="The path so far"
-            action={
-              <Link to="/experience" className="text-sm font-medium text-accent">
-                Full history
-              </Link>
-            }
-          />
-        </Reveal>
-
-        <AsyncSection
-          isLoading={experience.isLoading}
-          error={experience.error}
-          data={experience.data}
-          onRetry={experience.retry}
-          skeleton={<SkeletonCards count={2} />}
-          empty={<EmptyState title="No experience listed yet" description="" />}
-        >
-          {(entries) => (
-            <Reveal>
-              {/* The three most recent. The full list has its own route. */}
-              <ExperienceTimeline entries={entries.slice(0, 3)} />
-            </Reveal>
-          )}
-        </AsyncSection>
-      </Stage>
-
-      {/*
-        The end screen. The same ContactForm the /contact route renders — one
-        form, two places it can be reached from, no duplicated validation.
-      */}
-      <Stage index={4} id="contact" className="pb-8">
-        <StageLabel index={4} label="The end — say hello" />
-
+      <Section id="contact" eyebrow="Contact" title="Get in touch">
         <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
           <Reveal>
             <Card className="p-5 sm:p-7">
-              <h2 className="display display-xl text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.02] text-text">
-                You made it to the bottom.
-              </h2>
-              <p className="mt-3 max-w-prose text-muted">
-                That is further than most people scroll. Since you are here — what are you building?
+              <p className="max-w-prose text-muted">
+                Reach out about a role, a project, or a question about the work above.
               </p>
 
               <div className="mt-7">
@@ -220,7 +177,7 @@ export function HomePage() {
           {settings && (
             <Reveal index={1} as="aside" className="space-y-4">
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-text">Or reach out directly</h3>
+                <h3 className="text-sm font-semibold text-text">Direct contact</h3>
 
                 <dl className="mt-3 space-y-3 text-sm">
                   <div>
@@ -263,7 +220,42 @@ export function HomePage() {
             </Reveal>
           )}
         </div>
-      </Stage>
+      </Section>
     </>
+  );
+}
+
+/**
+ * A titled page section. The eyebrow names the topic in small caps; the title
+ * carries the substance. Kept as one component so every section shares spacing
+ * and the same rule above it.
+ */
+function Section({
+  id,
+  eyebrow,
+  title,
+  action,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-28 border-t border-border py-14 sm:py-20">
+      <Reveal>
+        <p className="mb-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          {/* Draws itself in when the section reveals. Decorative only. */}
+          <span aria-hidden="true" className="grow-line h-0.5 w-10 bg-accent" />
+          {eyebrow}
+        </p>
+      </Reveal>
+      <Reveal>
+        <SectionHeading title={title} action={action} />
+      </Reveal>
+      {children}
+    </section>
   );
 }

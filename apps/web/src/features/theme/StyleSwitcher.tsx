@@ -1,27 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import { usePalette } from '@/lib/usePalette';
-import { PALETTES } from './palettes';
+import { useStyle } from '@/lib/useStyle';
+import { STYLES } from './styles';
 import { cn } from '@/lib/cn';
 
 /**
- * The palette switcher, pinned to the bottom-right corner.
+ * The theme switcher, pinned to the bottom-right corner.
  *
  * A corner control rather than a bar across the foot of the page: this is a
  * preference someone sets once and then ignores, and a full-width dock spends
  * permanent screen space on it. Collapsed it is a single button; the options
  * only exist in the DOM while it is open.
  *
- * It changes nothing but colour. Light/dark stays where it was, in the header,
- * because the two are separate questions and duplicating that control in two
- * places would make it unclear which one is authoritative.
+ * It changes the visual style only. Light/dark stays in the header, because
+ * the two are separate questions.
  */
-export function PaletteSwitcher() {
-  const { palette, setPalette } = usePalette();
+export function StyleSwitcher() {
+  const { style, setStyle } = useStyle();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const current = PALETTES.find((option) => option.id === palette) ?? PALETTES[0]!;
+  const current = STYLES.find((option) => option.id === style) ?? STYLES[0]!;
 
   // Close on outside click and on Escape. Escape returns focus to the trigger,
   // or the keyboard user is dropped at the top of the document.
@@ -57,16 +56,16 @@ export function PaletteSwitcher() {
       {open && (
         <div
           role="radiogroup"
-          aria-label="Colour palette"
-          className="w-56 overflow-hidden rounded-card border-2 border-border-strong bg-surface shadow-[var(--shadow-lg)]"
+          aria-label="Visual theme"
+          className="style-panel w-60 overflow-hidden rounded-card border-2 border-border-strong bg-surface shadow-[var(--shadow-lg)]"
         >
           <p className="border-b-2 border-border-strong bg-surface-raised px-3.5 py-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
-            Palette
+            Theme
           </p>
 
           <ul className="p-1.5">
-            {PALETTES.map((option) => {
-              const selected = option.id === palette;
+            {STYLES.map((option) => {
+              const selected = option.id === style;
 
               return (
                 <li key={option.id}>
@@ -74,7 +73,7 @@ export function PaletteSwitcher() {
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    onClick={() => setPalette(option.id)}
+                    onClick={() => setStyle(option.id)}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-control px-2.5 py-2 text-left transition-colors duration-200',
                       selected ? 'bg-accent-subtle' : 'hover:bg-surface-raised',
@@ -94,8 +93,8 @@ export function PaletteSwitcher() {
                       <span className="block truncate text-xs text-subtle">{option.note}</span>
                     </span>
 
-                    {/* A tick, not a colour change alone — colour is the one
-                        channel a palette picker cannot rely on. */}
+                    {/* A tick, not a colour change alone. Colour is the one
+                        channel a theme picker cannot rely on. */}
                     <span
                       aria-hidden="true"
                       className={cn('text-sm text-accent', selected ? 'opacity-100' : 'opacity-0')}
@@ -114,10 +113,10 @@ export function PaletteSwitcher() {
         ref={triggerRef}
         type="button"
         aria-expanded={open}
-        aria-label={`Colour palette: ${current.name}. Change it.`}
-        title="Colour palette"
+        aria-label={`Visual theme: ${current.name}. Change it.`}
+        title="Visual theme"
         onClick={() => setOpen((value) => !value)}
-        className="push flex items-center gap-2 rounded-pill border-2 border-border-strong bg-surface py-2 pl-2.5 pr-3.5 shadow-[var(--shadow-sm)]"
+        className="push style-trigger flex items-center gap-2 rounded-pill border-2 border-border-strong bg-surface py-2 pl-2.5 pr-3.5 shadow-[var(--shadow-sm)]"
       >
         <Swatch colours={current.swatch} />
         <span className="text-sm font-semibold text-text">{current.name}</span>
@@ -126,7 +125,7 @@ export function PaletteSwitcher() {
   );
 }
 
-/** Three overlapping dots — ground, primary, secondary. */
+/** Three overlapping dots: ground, primary, secondary. */
 function Swatch({ colours }: { colours: readonly [string, string, string] }) {
   return (
     <span aria-hidden="true" className="flex shrink-0 items-center">

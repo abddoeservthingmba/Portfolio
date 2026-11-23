@@ -4,7 +4,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { Container } from '@/components/Container';
 import { ScrollProgress } from '@/components/motion/ScrollProgress';
-import { PaletteSwitcher } from '@/features/theme/PaletteSwitcher';
+import { StyleSwitcher } from '@/features/theme/StyleSwitcher';
 import { useAsync } from '@/lib/useAsync';
 import { getSettings } from '@/lib/content';
 
@@ -57,7 +57,7 @@ export function RootLayout() {
         it is the topmost thing in the shell and should not sit inside the
         footer's stacking context.
       */}
-      <PaletteSwitcher />
+      <StyleSwitcher />
     </div>
   );
 }

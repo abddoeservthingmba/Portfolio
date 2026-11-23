@@ -3,444 +3,451 @@
 /*
  * Design tokens (D12: tokens before components).
  *
- * Warm and vivid: coral-orange as the primary accent, butter yellow as the
- * secondary, on cream rather than cool grey. The whole palette sits in warm
- * hues so nothing reads as clinical.
+ * Three visual styles, selected by data-style on <html>. Each style is a full
+ * token set plus its own type pairing and surface treatment. Light/dark is a
+ * second axis, so every style is written for both modes:
  *
- * Every animated property below is transform, opacity or filter. Those run on
- * the compositor, so motion stays smooth without touching layout. Nothing here
- * animates width, height, top or left.
+ *   :root[data-style]                              light
+ *   :root[data-style]:not([data-theme='light'])    dark, when the OS asks
+ *   :root[data-style][data-theme='dark']           dark, when chosen
+ *
+ * The three selectors are written out per style rather than merged, because
+ * CSS cannot share a declaration block between selectors that must not merge.
+ *
+ * Every animated property is transform, opacity or filter, so motion stays on
+ * the compositor. Nothing here animates width, height, top or left.
  */
 
+/* Fallback before data-style is set. Matches the Glass style. */
 :root {
   color-scheme: light;
-
-  /* Cream, not white — the warmth is what makes the accents sing. */
-  --bg: oklch(97.5% 0.018 85);
-  --bg-elevated: oklch(99% 0.012 85);
-  --surface: oklch(100% 0.006 85);
-  --surface-raised: oklch(96% 0.025 88);
-  --surface-sunken: oklch(94% 0.03 88);
-  --border: oklch(88% 0.03 80);
-  --border-strong: oklch(22% 0.03 60);
-  /* The offset shadow. Separate from the outline because dark mode needs an
-     outline lighter than the page but a shadow that is still a shadow. */
-  --ink: oklch(22% 0.03 60);
-
-  --text: oklch(22% 0.03 60);
-  --text-muted: oklch(45% 0.03 60);
-  --text-subtle: oklch(60% 0.03 65);
-
-  /* Coral-orange. The eye-catcher. */
-  --accent: oklch(66% 0.2 42);
-  --accent-hover: oklch(60% 0.21 42);
-  --accent-fg: oklch(99% 0.01 85);
-  --accent-subtle: oklch(93% 0.06 55);
-  --accent-glow: oklch(66% 0.2 42 / 0.35);
-
-  /* Butter yellow, taken from the reference. */
-  --accent-2: oklch(93% 0.13 103);
-  --accent-2-fg: oklch(22% 0.03 60);
-  --accent-3: oklch(62% 0.16 200);
-
+  --bg: oklch(95% 0.012 270);
+  --bg-elevated: oklch(97% 0.01 270);
+  --surface: oklch(100% 0 0 / 0.55);
+  --surface-raised: oklch(100% 0 0 / 0.72);
+  --surface-sunken: oklch(100% 0 0 / 0.3);
+  --border: oklch(100% 0 0 / 0.7);
+  --border-strong: oklch(60% 0.05 275 / 0.35);
+  --ink: oklch(22% 0.04 275);
+  --text: oklch(22% 0.04 275);
+  --text-muted: oklch(42% 0.04 275);
+  --text-subtle: oklch(58% 0.03 275);
+  --accent: oklch(60% 0.22 275);
+  --accent-hover: oklch(54% 0.23 275);
+  --accent-fg: oklch(99% 0 0);
+  --accent-subtle: oklch(92% 0.05 275);
+  --accent-glow: oklch(60% 0.22 275 / 0.35);
+  --accent-2: oklch(82% 0.12 215);
+  --accent-2-fg: oklch(22% 0.04 275);
+  --accent-3: oklch(70% 0.2 330);
   --danger: oklch(55% 0.21 27);
-  --danger-subtle: oklch(95% 0.05 30);
-  --success: oklch(60% 0.16 150);
-  --success-subtle: oklch(94% 0.06 150);
-
-  --ring: oklch(66% 0.2 42);
-
-  /*
-   * The footer is a full-width colour block in light mode. In dark mode a
-   * screen-wide butter-yellow slab defeats the point of dark mode, so it
-   * becomes a deep surface and the yellow moves to the accents.
-   */
-  --footer-bg: oklch(93% 0.13 103);
-  --footer-fg: oklch(22% 0.03 60);
-  --footer-muted: oklch(38% 0.04 70);
-
-  /*
-   * Hard offset shadows rather than soft blurs. A crisp displaced edge is what
-   * gives the surfaces their tactile, printed quality.
-   */
-  --shadow-sm: 2px 2px 0 var(--ink);
-  --shadow-md: 4px 4px 0 var(--ink);
-  --shadow-lg: 7px 7px 0 var(--ink);
-  --shadow-soft: 0 18px 40px oklch(30% 0.05 60 / 0.1);
-
-  --grain-opacity: 0.035;
-
-  /*
-   * Correction applied to generated project cover art. The covers are fixed
-   * light tints by design — they read as printed stock — so on cream they need
-   * nothing, and against the dark palette they are dimmed rather than
-   * recoloured. Recolouring them would cost the per-project identity the tint
-   * is carrying.
-   */
+  --danger-subtle: oklch(95% 0.04 27);
+  --success: oklch(58% 0.15 155);
+  --success-subtle: oklch(95% 0.04 155);
+  --ring: oklch(60% 0.22 275);
+  --footer-bg: oklch(22% 0.04 275);
+  --footer-fg: oklch(96% 0.01 270);
+  --footer-muted: oklch(72% 0.03 275);
+  --shadow-sm: 0 4px 16px oklch(30% 0.05 275 / 0.1);
+  --shadow-md: 0 10px 30px oklch(30% 0.05 275 / 0.12);
+  --shadow-lg: 0 22px 50px oklch(30% 0.05 275 / 0.18);
+  --shadow-soft: 0 18px 40px oklch(30% 0.05 275 / 0.1);
+  --grain-opacity: 0.03;
   --cover-dim: none;
+  --page-art: none;
+  --page-art-size: auto;
+  --r-card: 1.5rem;
+  --r-control: 0.9rem;
+  --f-display: 'Sora', Inter, ui-sans-serif, system-ui, sans-serif;
+  --display-weight: 650;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.045em;
+  --glass-blur: 18px;
 }
 
-/*
- * The dark palette is written twice on purpose: once for the system setting
- * and once for an explicit choice. CSS cannot share a declaration block between
- * two selectors that must not be merged, and duplicating the variables is
- * cheaper than the indirection a preprocessor would add.
- */
+/* ===================================================================== */
+/*  GLASS: frosted panels over a soft colour field. The default.          */
+/* ===================================================================== */
+
+:root[data-style='glass'] {
+  color-scheme: light;
+  --bg: oklch(95% 0.012 270);
+  --bg-elevated: oklch(97% 0.01 270);
+  --surface: oklch(100% 0 0 / 0.55);
+  --surface-raised: oklch(100% 0 0 / 0.72);
+  --surface-sunken: oklch(100% 0 0 / 0.3);
+  --border: oklch(100% 0 0 / 0.7);
+  --border-strong: oklch(60% 0.05 275 / 0.35);
+  --ink: oklch(22% 0.04 275);
+  --text: oklch(22% 0.04 275);
+  --text-muted: oklch(42% 0.04 275);
+  --text-subtle: oklch(58% 0.03 275);
+  --accent: oklch(60% 0.22 275);
+  --accent-hover: oklch(54% 0.23 275);
+  --accent-fg: oklch(99% 0 0);
+  --accent-subtle: oklch(92% 0.05 275);
+  --accent-glow: oklch(60% 0.22 275 / 0.35);
+  --accent-2: oklch(82% 0.12 215);
+  --accent-2-fg: oklch(22% 0.04 275);
+  --accent-3: oklch(70% 0.2 330);
+  --danger: oklch(55% 0.21 27);
+  --danger-subtle: oklch(95% 0.04 27);
+  --success: oklch(58% 0.15 155);
+  --success-subtle: oklch(95% 0.04 155);
+  --ring: oklch(60% 0.22 275);
+  --footer-bg: oklch(22% 0.04 275);
+  --footer-fg: oklch(96% 0.01 270);
+  --footer-muted: oklch(72% 0.03 275);
+  --shadow-sm: 0 4px 16px oklch(30% 0.05 275 / 0.1);
+  --shadow-md: 0 10px 30px oklch(30% 0.05 275 / 0.12);
+  --shadow-lg: 0 22px 50px oklch(30% 0.05 275 / 0.18);
+  --shadow-soft: 0 18px 40px oklch(30% 0.05 275 / 0.1);
+  --grain-opacity: 0.03;
+  --cover-dim: none;
+  --page-art:
+    radial-gradient(60vmax 60vmax at -8% -12%, oklch(84% 0.13 275 / 0.75), transparent 60%),
+    radial-gradient(50vmax 50vmax at 108% 8%, oklch(88% 0.11 215 / 0.65), transparent 60%),
+    radial-gradient(55vmax 55vmax at 50% 112%, oklch(90% 0.1 330 / 0.5), transparent 60%);
+  --r-card: 1.75rem;
+  --r-control: 1rem;
+  --f-display: 'Sora', Inter, ui-sans-serif, system-ui, sans-serif;
+  --display-weight: 650;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.045em;
+  --glass-blur: 18px;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root[data-style='glass']:not([data-theme='light']) {
     color-scheme: dark;
+    --bg: oklch(18% 0.035 275);
+    --bg-elevated: oklch(21% 0.04 275);
+    --surface: oklch(30% 0.04 275 / 0.42);
+    --surface-raised: oklch(34% 0.045 275 / 0.6);
+    --surface-sunken: oklch(16% 0.03 275 / 0.35);
+    --border: oklch(100% 0 0 / 0.12);
+    --border-strong: oklch(100% 0 0 / 0.22);
+    --ink: oklch(8% 0.02 275);
+    --text: oklch(96% 0.01 270);
+    --text-muted: oklch(78% 0.03 275);
+    --text-subtle: oklch(62% 0.04 275);
+    --accent: oklch(72% 0.19 275);
+    --accent-hover: oklch(78% 0.18 275);
+    --accent-fg: oklch(16% 0.03 275);
+    --accent-subtle: oklch(34% 0.09 275 / 0.6);
+    --accent-glow: oklch(72% 0.19 275 / 0.45);
+    --accent-2: oklch(84% 0.12 215);
+    --accent-2-fg: oklch(16% 0.03 275);
+    --accent-3: oklch(74% 0.18 330);
+    --danger: oklch(70% 0.19 27);
+    --danger-subtle: oklch(30% 0.08 27 / 0.6);
+    --success: oklch(78% 0.16 155);
+    --success-subtle: oklch(30% 0.07 155 / 0.6);
+    --ring: oklch(72% 0.19 275);
+    --footer-bg: oklch(14% 0.03 275);
+    --footer-fg: oklch(96% 0.01 270);
+    --footer-muted: oklch(70% 0.03 275);
+    --shadow-sm: 0 4px 18px oklch(0% 0 0 / 0.3);
+    --shadow-md: 0 12px 34px oklch(0% 0 0 / 0.35);
+    --shadow-lg: 0 24px 56px oklch(0% 0 0 / 0.45);
+    --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.4);
+    --grain-opacity: 0.04;
+    --cover-dim: brightness(0.85) saturate(0.95);
+    --page-art:
+      radial-gradient(60vmax 60vmax at -8% -12%, oklch(42% 0.16 275 / 0.6), transparent 60%),
+      radial-gradient(50vmax 50vmax at 108% 8%, oklch(45% 0.13 215 / 0.45), transparent 60%),
+      radial-gradient(55vmax 55vmax at 50% 112%, oklch(42% 0.13 330 / 0.4), transparent 60%);
+  }
+}
 
-    --bg: oklch(16% 0.02 50);
-    --bg-elevated: oklch(19% 0.022 50);
-    --surface: oklch(21% 0.025 50);
-    --surface-raised: oklch(25% 0.03 50);
-    --surface-sunken: oklch(13% 0.018 50);
-    --border: oklch(32% 0.035 55);
-    --border-strong: oklch(52% 0.05 60);
-    --ink: oklch(6% 0.01 50);
+:root[data-style='glass'][data-theme='dark'] {
+  color-scheme: dark;
+  --bg: oklch(18% 0.035 275);
+  --bg-elevated: oklch(21% 0.04 275);
+  --surface: oklch(30% 0.04 275 / 0.42);
+  --surface-raised: oklch(34% 0.045 275 / 0.6);
+  --surface-sunken: oklch(16% 0.03 275 / 0.35);
+  --border: oklch(100% 0 0 / 0.12);
+  --border-strong: oklch(100% 0 0 / 0.22);
+  --ink: oklch(8% 0.02 275);
+  --text: oklch(96% 0.01 270);
+  --text-muted: oklch(78% 0.03 275);
+  --text-subtle: oklch(62% 0.04 275);
+  --accent: oklch(72% 0.19 275);
+  --accent-hover: oklch(78% 0.18 275);
+  --accent-fg: oklch(16% 0.03 275);
+  --accent-subtle: oklch(34% 0.09 275 / 0.6);
+  --accent-glow: oklch(72% 0.19 275 / 0.45);
+  --accent-2: oklch(84% 0.12 215);
+  --accent-2-fg: oklch(16% 0.03 275);
+  --accent-3: oklch(74% 0.18 330);
+  --danger: oklch(70% 0.19 27);
+  --danger-subtle: oklch(30% 0.08 27 / 0.6);
+  --success: oklch(78% 0.16 155);
+  --success-subtle: oklch(30% 0.07 155 / 0.6);
+  --ring: oklch(72% 0.19 275);
+  --footer-bg: oklch(14% 0.03 275);
+  --footer-fg: oklch(96% 0.01 270);
+  --footer-muted: oklch(70% 0.03 275);
+  --shadow-sm: 0 4px 18px oklch(0% 0 0 / 0.3);
+  --shadow-md: 0 12px 34px oklch(0% 0 0 / 0.35);
+  --shadow-lg: 0 24px 56px oklch(0% 0 0 / 0.45);
+  --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.4);
+  --grain-opacity: 0.04;
+  --cover-dim: brightness(0.85) saturate(0.95);
+  --page-art:
+    radial-gradient(60vmax 60vmax at -8% -12%, oklch(42% 0.16 275 / 0.6), transparent 60%),
+    radial-gradient(50vmax 50vmax at 108% 8%, oklch(45% 0.13 215 / 0.45), transparent 60%),
+    radial-gradient(55vmax 55vmax at 50% 112%, oklch(42% 0.13 330 / 0.4), transparent 60%);
+}
 
-    --text: oklch(96% 0.015 85);
-    --text-muted: oklch(74% 0.025 70);
-    --text-subtle: oklch(58% 0.03 65);
+/* ===================================================================== */
+/*  MINIMAL: ink on paper. Hairlines, no shadows, one accent, air.        */
+/* ===================================================================== */
 
-    --accent: oklch(75% 0.19 45);
-    --accent-hover: oklch(82% 0.18 48);
-    --accent-fg: oklch(16% 0.03 50);
-    --accent-subtle: oklch(30% 0.08 45);
-    --accent-glow: oklch(75% 0.19 45 / 0.45);
+:root[data-style='minimal'] {
+  color-scheme: light;
+  --bg: oklch(99% 0 0);
+  --bg-elevated: oklch(100% 0 0);
+  --surface: oklch(100% 0 0);
+  --surface-raised: oklch(97.5% 0 0);
+  --surface-sunken: oklch(96% 0 0);
+  --border: oklch(92% 0 0);
+  --border-strong: oklch(78% 0 0);
+  --ink: oklch(18% 0 0);
+  --text: oklch(18% 0 0);
+  --text-muted: oklch(42% 0 0);
+  --text-subtle: oklch(56% 0 0);
+  --accent: oklch(18% 0 0);
+  --accent-hover: oklch(36% 0 0);
+  --accent-fg: oklch(99% 0 0);
+  --accent-subtle: oklch(94% 0 0);
+  --accent-glow: oklch(18% 0 0 / 0.12);
+  --accent-2: oklch(90% 0 0);
+  --accent-2-fg: oklch(18% 0 0);
+  --accent-3: oklch(52% 0.12 250);
+  --danger: oklch(50% 0.2 27);
+  --danger-subtle: oklch(96% 0.02 27);
+  --success: oklch(50% 0.13 150);
+  --success-subtle: oklch(96% 0.03 150);
+  --ring: oklch(18% 0 0);
+  --footer-bg: oklch(18% 0 0);
+  --footer-fg: oklch(98% 0 0);
+  --footer-muted: oklch(72% 0 0);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: 0 1px 0 oklch(18% 0 0 / 0.04);
+  --shadow-soft: 0 1px 2px oklch(0% 0 0 / 0.04);
+  --grain-opacity: 0;
+  --cover-dim: none;
+  --page-art: none;
+  --r-card: 0.75rem;
+  --r-control: 0.5rem;
+  --f-display: 'Inter Tight', Inter, ui-sans-serif, system-ui, sans-serif;
+  --display-weight: 600;
+  --display-tracking: -0.04em;
+  --display-tracking-xl: -0.05em;
+  --glass-blur: 0px;
+}
 
-    --accent-2: oklch(90% 0.15 103);
-    --accent-2-fg: oklch(16% 0.03 50);
-    --accent-3: oklch(72% 0.15 200);
+@media (prefers-color-scheme: dark) {
+  :root[data-style='minimal']:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: oklch(13% 0 0);
+    --bg-elevated: oklch(16% 0 0);
+    --surface: oklch(17% 0 0);
+    --surface-raised: oklch(21% 0 0);
+    --surface-sunken: oklch(11% 0 0);
+    --border: oklch(26% 0 0);
+    --border-strong: oklch(40% 0 0);
+    --ink: oklch(0% 0 0);
+    --text: oklch(96% 0 0);
+    --text-muted: oklch(74% 0 0);
+    --text-subtle: oklch(56% 0 0);
+    --accent: oklch(96% 0 0);
+    --accent-hover: oklch(86% 0 0);
+    --accent-fg: oklch(13% 0 0);
+    --accent-subtle: oklch(24% 0 0);
+    --accent-glow: oklch(96% 0 0 / 0.12);
+    --accent-2: oklch(30% 0 0);
+    --accent-2-fg: oklch(96% 0 0);
+    --accent-3: oklch(70% 0.12 250);
+    --danger: oklch(68% 0.19 27);
+    --danger-subtle: oklch(24% 0.06 27);
+    --success: oklch(72% 0.14 150);
+    --success-subtle: oklch(24% 0.05 150);
+    --ring: oklch(96% 0 0);
+    --footer-bg: oklch(96% 0 0);
+    --footer-fg: oklch(14% 0 0);
+    --footer-muted: oklch(40% 0 0);
+    --shadow-lg: 0 1px 0 oklch(96% 0 0 / 0.04);
+    --shadow-soft: none;
+    --grain-opacity: 0;
+    --cover-dim: brightness(0.85);
+  }
+}
 
+:root[data-style='minimal'][data-theme='dark'] {
+  color-scheme: dark;
+  --bg: oklch(13% 0 0);
+  --bg-elevated: oklch(16% 0 0);
+  --surface: oklch(17% 0 0);
+  --surface-raised: oklch(21% 0 0);
+  --surface-sunken: oklch(11% 0 0);
+  --border: oklch(26% 0 0);
+  --border-strong: oklch(40% 0 0);
+  --ink: oklch(0% 0 0);
+  --text: oklch(96% 0 0);
+  --text-muted: oklch(74% 0 0);
+  --text-subtle: oklch(56% 0 0);
+  --accent: oklch(96% 0 0);
+  --accent-hover: oklch(86% 0 0);
+  --accent-fg: oklch(13% 0 0);
+  --accent-subtle: oklch(24% 0 0);
+  --accent-glow: oklch(96% 0 0 / 0.12);
+  --accent-2: oklch(30% 0 0);
+  --accent-2-fg: oklch(96% 0 0);
+  --accent-3: oklch(70% 0.12 250);
+  --danger: oklch(68% 0.19 27);
+  --danger-subtle: oklch(24% 0.06 27);
+  --success: oklch(72% 0.14 150);
+  --success-subtle: oklch(24% 0.05 150);
+  --ring: oklch(96% 0 0);
+  --footer-bg: oklch(96% 0 0);
+  --footer-fg: oklch(14% 0 0);
+  --footer-muted: oklch(40% 0 0);
+  --shadow-lg: 0 1px 0 oklch(96% 0 0 / 0.04);
+  --shadow-soft: none;
+  --grain-opacity: 0;
+  --cover-dim: brightness(0.85);
+}
+
+/* ===================================================================== */
+/*  GEOMETRIC: hard edges, hard shadows, primaries, a dot grid.           */
+/* ===================================================================== */
+
+:root[data-style='geometric'] {
+  color-scheme: light;
+  --bg: oklch(96% 0.01 95);
+  --bg-elevated: oklch(98% 0.008 95);
+  --surface: oklch(100% 0 0);
+  --surface-raised: oklch(93% 0.03 95);
+  --surface-sunken: oklch(91% 0.03 95);
+  --border: oklch(82% 0.01 95);
+  --border-strong: oklch(18% 0 0);
+  --ink: oklch(18% 0 0);
+  --text: oklch(18% 0 0);
+  --text-muted: oklch(40% 0.01 95);
+  --text-subtle: oklch(55% 0.01 95);
+  --accent: oklch(62% 0.24 27);
+  --accent-hover: oklch(56% 0.24 27);
+  --accent-fg: oklch(99% 0 0);
+  --accent-subtle: oklch(93% 0.05 27);
+  --accent-glow: oklch(62% 0.24 27 / 0.35);
+  --accent-2: oklch(88% 0.17 95);
+  --accent-2-fg: oklch(18% 0 0);
+  --accent-3: oklch(50% 0.2 262);
+  --danger: oklch(55% 0.22 27);
+  --danger-subtle: oklch(94% 0.05 27);
+  --success: oklch(58% 0.16 150);
+  --success-subtle: oklch(94% 0.06 150);
+  --ring: oklch(62% 0.24 27);
+  --footer-bg: oklch(88% 0.17 95);
+  --footer-fg: oklch(18% 0 0);
+  --footer-muted: oklch(38% 0.04 95);
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow-md: 6px 6px 0 var(--ink);
+  --shadow-lg: 10px 10px 0 var(--ink);
+  --shadow-soft: 0 18px 40px oklch(20% 0 0 / 0.12);
+  --grain-opacity: 0.02;
+  --cover-dim: none;
+  --page-art: radial-gradient(oklch(18% 0 0 / 0.14) 1.2px, transparent 1.4px);
+  --page-art-size: 22px 22px;
+  --r-card: 0;
+  --r-control: 0;
+  --f-display: 'Unbounded', Inter, ui-sans-serif, system-ui, sans-serif;
+  --display-weight: 700;
+  --display-tracking: -0.03em;
+  --display-tracking-xl: -0.04em;
+  --glass-blur: 0px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-style='geometric']:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: oklch(16% 0.01 95);
+    --bg-elevated: oklch(19% 0.01 95);
+    --surface: oklch(22% 0.01 95);
+    --surface-raised: oklch(27% 0.02 95);
+    --surface-sunken: oklch(13% 0.01 95);
+    --border: oklch(34% 0.01 95);
+    --border-strong: oklch(94% 0.01 95);
+    --ink: oklch(0% 0 0);
+    --text: oklch(96% 0.01 95);
+    --text-muted: oklch(78% 0.01 95);
+    --text-subtle: oklch(62% 0.01 95);
+    --accent: oklch(68% 0.24 27);
+    --accent-hover: oklch(74% 0.22 27);
+    --accent-fg: oklch(99% 0 0);
+    --accent-subtle: oklch(30% 0.08 27);
+    --accent-glow: oklch(68% 0.24 27 / 0.45);
+    --accent-2: oklch(88% 0.17 95);
+    --accent-2-fg: oklch(18% 0 0);
+    --accent-3: oklch(70% 0.16 262);
     --danger: oklch(70% 0.19 27);
     --danger-subtle: oklch(27% 0.08 27);
     --success: oklch(78% 0.17 150);
     --success-subtle: oklch(26% 0.07 150);
-
-    --ring: oklch(75% 0.19 45);
-
-    --footer-bg: oklch(12% 0.018 50);
-    --footer-fg: oklch(90% 0.15 103);
-    --footer-muted: oklch(70% 0.03 70);
-
-    --shadow-sm: 2px 2px 0 var(--ink);
-    --shadow-md: 4px 4px 0 var(--ink);
-    --shadow-lg: 7px 7px 0 var(--ink);
+    --ring: oklch(68% 0.24 27);
+    --footer-bg: oklch(22% 0.01 95);
+    --footer-fg: oklch(96% 0.01 95);
+    --footer-muted: oklch(72% 0.01 95);
+    --shadow-sm: 3px 3px 0 var(--ink);
+    --shadow-md: 6px 6px 0 var(--ink);
+    --shadow-lg: 10px 10px 0 var(--ink);
     --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.5);
-
-    --grain-opacity: 0.05;
-
+    --grain-opacity: 0.02;
     --cover-dim: brightness(0.82) saturate(0.9);
+    --page-art: radial-gradient(oklch(96% 0 0 / 0.1) 1.2px, transparent 1.4px);
   }
 }
 
-:root[data-theme='dark'] {
+:root[data-style='geometric'][data-theme='dark'] {
   color-scheme: dark;
-
-  --bg: oklch(16% 0.02 50);
-  --bg-elevated: oklch(19% 0.022 50);
-  --surface: oklch(21% 0.025 50);
-  --surface-raised: oklch(25% 0.03 50);
-  --surface-sunken: oklch(13% 0.018 50);
-  --border: oklch(32% 0.035 55);
-  --border-strong: oklch(52% 0.05 60);
-  --ink: oklch(6% 0.01 50);
-
-  --text: oklch(96% 0.015 85);
-  --text-muted: oklch(74% 0.025 70);
-  --text-subtle: oklch(58% 0.03 65);
-
-  --accent: oklch(75% 0.19 45);
-  --accent-hover: oklch(82% 0.18 48);
-  --accent-fg: oklch(16% 0.03 50);
-  --accent-subtle: oklch(30% 0.08 45);
-  --accent-glow: oklch(75% 0.19 45 / 0.45);
-
-  --accent-2: oklch(90% 0.15 103);
-  --accent-2-fg: oklch(16% 0.03 50);
-  --accent-3: oklch(72% 0.15 200);
-
+  --bg: oklch(16% 0.01 95);
+  --bg-elevated: oklch(19% 0.01 95);
+  --surface: oklch(22% 0.01 95);
+  --surface-raised: oklch(27% 0.02 95);
+  --surface-sunken: oklch(13% 0.01 95);
+  --border: oklch(34% 0.01 95);
+  --border-strong: oklch(94% 0.01 95);
+  --ink: oklch(0% 0 0);
+  --text: oklch(96% 0.01 95);
+  --text-muted: oklch(78% 0.01 95);
+  --text-subtle: oklch(62% 0.01 95);
+  --accent: oklch(68% 0.24 27);
+  --accent-hover: oklch(74% 0.22 27);
+  --accent-fg: oklch(99% 0 0);
+  --accent-subtle: oklch(30% 0.08 27);
+  --accent-glow: oklch(68% 0.24 27 / 0.45);
+  --accent-2: oklch(88% 0.17 95);
+  --accent-2-fg: oklch(18% 0 0);
+  --accent-3: oklch(70% 0.16 262);
   --danger: oklch(70% 0.19 27);
   --danger-subtle: oklch(27% 0.08 27);
   --success: oklch(78% 0.17 150);
   --success-subtle: oklch(26% 0.07 150);
-
-  --ring: oklch(75% 0.19 45);
-
-  --footer-bg: oklch(12% 0.018 50);
-  --footer-fg: oklch(90% 0.15 103);
-  --footer-muted: oklch(70% 0.03 70);
-
-  --shadow-sm: 2px 2px 0 var(--ink);
-  --shadow-md: 4px 4px 0 var(--ink);
-  --shadow-lg: 7px 7px 0 var(--ink);
+  --ring: oklch(68% 0.24 27);
+  --footer-bg: oklch(22% 0.01 95);
+  --footer-fg: oklch(96% 0.01 95);
+  --footer-muted: oklch(72% 0.01 95);
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow-md: 6px 6px 0 var(--ink);
+  --shadow-lg: 10px 10px 0 var(--ink);
   --shadow-soft: 0 20px 50px oklch(0% 0 0 / 0.5);
-
-  --grain-opacity: 0.05;
-
+  --grain-opacity: 0.02;
   --cover-dim: brightness(0.82) saturate(0.9);
-}
-
-/*
- * Alternative palettes.
- *
- * A second axis, independent of light/dark: light/dark answers how bright the
- * page should be, the palette answers which hue family it is built from. Each
- * palette is therefore defined for BOTH modes — choosing one must never drag
- * someone out of dark mode.
- *
- * These blocks sit after the light and dark blocks above and override the same
- * token names, so everything downstream — components, utilities, the @theme
- * mapping — is untouched. The default palette (Ember) is deliberately absent:
- * it is the base block above, so there is no copy of it here to drift.
- *
- * Each palette repeats the dark declarations twice, for the same reason the
- * base palette does: the system-dark selector and the explicit-choice selector
- * cannot be merged without one of them losing to the other.
- */
-
-/* Tide — Deep blue and teal. */
-:root[data-palette='tide'] {
-  --bg: oklch(97.5% 0.018 240);
-  --bg-elevated: oklch(99% 0.012 240);
-  --surface: oklch(100% 0.006 240);
-  --surface-raised: oklch(96% 0.025 240);
-  --surface-sunken: oklch(94% 0.03 240);
-  --border: oklch(88% 0.03 240);
-  --border-strong: oklch(22% 0.03 250);
-  --ink: oklch(22% 0.03 250);
-  --text: oklch(22% 0.03 250);
-  --text-muted: oklch(45% 0.03 250);
-  --text-subtle: oklch(60% 0.03 250);
-  --accent: oklch(55% 0.17 245);
-  --accent-hover: oklch(49% 0.18 245);
-  --accent-fg: oklch(99% 0.01 240);
-  --accent-subtle: oklch(93% 0.06 245);
-  --accent-glow: oklch(55% 0.17 245 / 0.35);
-  --accent-2: oklch(88% 0.11 195);
-  --accent-2-fg: oklch(22% 0.03 250);
-  --accent-3: oklch(62% 0.16 300);
-  --ring: oklch(55% 0.17 245);
-  --footer-bg: oklch(88% 0.11 195);
-  --footer-fg: oklch(22% 0.03 250);
-  --footer-muted: oklch(38% 0.04 250);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-palette='tide']:not([data-theme='light']) {
-    --bg: oklch(16% 0.02 240);
-    --bg-elevated: oklch(19% 0.022 240);
-    --surface: oklch(21% 0.025 240);
-    --surface-raised: oklch(25% 0.03 240);
-    --surface-sunken: oklch(13% 0.018 240);
-    --border: oklch(32% 0.035 240);
-    --border-strong: oklch(52% 0.05 240);
-    --ink: oklch(6% 0.01 240);
-    --text: oklch(96% 0.015 240);
-    --text-muted: oklch(74% 0.025 240);
-    --text-subtle: oklch(58% 0.03 240);
-    --accent: oklch(72% 0.15 240);
-    --accent-hover: oklch(79% 0.14 240);
-    --accent-fg: oklch(16% 0.03 240);
-    --accent-subtle: oklch(30% 0.08 240);
-    --accent-glow: oklch(72% 0.15 240 / 0.45);
-    --accent-2: oklch(85% 0.12 195);
-    --accent-2-fg: oklch(16% 0.03 240);
-    --accent-3: oklch(72% 0.15 300);
-    --ring: oklch(72% 0.15 240);
-    --footer-bg: oklch(12% 0.018 240);
-    --footer-fg: oklch(85% 0.12 195);
-    --footer-muted: oklch(70% 0.03 240);
-  }
-}
-
-:root[data-theme='dark'][data-palette='tide'] {
-  --bg: oklch(16% 0.02 240);
-  --bg-elevated: oklch(19% 0.022 240);
-  --surface: oklch(21% 0.025 240);
-  --surface-raised: oklch(25% 0.03 240);
-  --surface-sunken: oklch(13% 0.018 240);
-  --border: oklch(32% 0.035 240);
-  --border-strong: oklch(52% 0.05 240);
-  --ink: oklch(6% 0.01 240);
-  --text: oklch(96% 0.015 240);
-  --text-muted: oklch(74% 0.025 240);
-  --text-subtle: oklch(58% 0.03 240);
-  --accent: oklch(72% 0.15 240);
-  --accent-hover: oklch(79% 0.14 240);
-  --accent-fg: oklch(16% 0.03 240);
-  --accent-subtle: oklch(30% 0.08 240);
-  --accent-glow: oklch(72% 0.15 240 / 0.45);
-  --accent-2: oklch(85% 0.12 195);
-  --accent-2-fg: oklch(16% 0.03 240);
-  --accent-3: oklch(72% 0.15 300);
-  --ring: oklch(72% 0.15 240);
-  --footer-bg: oklch(12% 0.018 240);
-  --footer-fg: oklch(85% 0.12 195);
-  --footer-muted: oklch(70% 0.03 240);
-}
-
-/* Moss — Forest and lichen. */
-:root[data-palette='moss'] {
-  --bg: oklch(97.5% 0.018 130);
-  --bg-elevated: oklch(99% 0.012 130);
-  --surface: oklch(100% 0.006 130);
-  --surface-raised: oklch(96% 0.025 130);
-  --surface-sunken: oklch(94% 0.03 130);
-  --border: oklch(88% 0.03 130);
-  --border-strong: oklch(22% 0.03 140);
-  --ink: oklch(22% 0.03 140);
-  --text: oklch(22% 0.03 140);
-  --text-muted: oklch(45% 0.03 140);
-  --text-subtle: oklch(60% 0.03 140);
-  --accent: oklch(52% 0.14 150);
-  --accent-hover: oklch(46% 0.15 150);
-  --accent-fg: oklch(99% 0.01 130);
-  --accent-subtle: oklch(93% 0.06 150);
-  --accent-glow: oklch(52% 0.14 150 / 0.35);
-  --accent-2: oklch(90% 0.13 110);
-  --accent-2-fg: oklch(22% 0.03 140);
-  --accent-3: oklch(62% 0.16 200);
-  --ring: oklch(52% 0.14 150);
-  --footer-bg: oklch(90% 0.13 110);
-  --footer-fg: oklch(22% 0.03 140);
-  --footer-muted: oklch(38% 0.04 140);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-palette='moss']:not([data-theme='light']) {
-    --bg: oklch(16% 0.02 130);
-    --bg-elevated: oklch(19% 0.022 130);
-    --surface: oklch(21% 0.025 130);
-    --surface-raised: oklch(25% 0.03 130);
-    --surface-sunken: oklch(13% 0.018 130);
-    --border: oklch(32% 0.035 130);
-    --border-strong: oklch(52% 0.05 130);
-    --ink: oklch(6% 0.01 130);
-    --text: oklch(96% 0.015 130);
-    --text-muted: oklch(74% 0.025 130);
-    --text-subtle: oklch(58% 0.03 130);
-    --accent: oklch(75% 0.15 150);
-    --accent-hover: oklch(82% 0.14 150);
-    --accent-fg: oklch(16% 0.03 130);
-    --accent-subtle: oklch(30% 0.08 150);
-    --accent-glow: oklch(75% 0.15 150 / 0.45);
-    --accent-2: oklch(88% 0.14 110);
-    --accent-2-fg: oklch(16% 0.03 130);
-    --accent-3: oklch(72% 0.15 200);
-    --ring: oklch(75% 0.15 150);
-    --footer-bg: oklch(12% 0.018 130);
-    --footer-fg: oklch(88% 0.14 110);
-    --footer-muted: oklch(70% 0.03 130);
-  }
-}
-
-:root[data-theme='dark'][data-palette='moss'] {
-  --bg: oklch(16% 0.02 130);
-  --bg-elevated: oklch(19% 0.022 130);
-  --surface: oklch(21% 0.025 130);
-  --surface-raised: oklch(25% 0.03 130);
-  --surface-sunken: oklch(13% 0.018 130);
-  --border: oklch(32% 0.035 130);
-  --border-strong: oklch(52% 0.05 130);
-  --ink: oklch(6% 0.01 130);
-  --text: oklch(96% 0.015 130);
-  --text-muted: oklch(74% 0.025 130);
-  --text-subtle: oklch(58% 0.03 130);
-  --accent: oklch(75% 0.15 150);
-  --accent-hover: oklch(82% 0.14 150);
-  --accent-fg: oklch(16% 0.03 130);
-  --accent-subtle: oklch(30% 0.08 150);
-  --accent-glow: oklch(75% 0.15 150 / 0.45);
-  --accent-2: oklch(88% 0.14 110);
-  --accent-2-fg: oklch(16% 0.03 130);
-  --accent-3: oklch(72% 0.15 200);
-  --ring: oklch(75% 0.15 150);
-  --footer-bg: oklch(12% 0.018 130);
-  --footer-fg: oklch(88% 0.14 110);
-  --footer-muted: oklch(70% 0.03 130);
-}
-
-/* Plum — Violet and amber. */
-:root[data-palette='plum'] {
-  --bg: oklch(97.5% 0.018 320);
-  --bg-elevated: oklch(99% 0.012 320);
-  --surface: oklch(100% 0.006 320);
-  --surface-raised: oklch(96% 0.025 320);
-  --surface-sunken: oklch(94% 0.03 320);
-  --border: oklch(88% 0.03 320);
-  --border-strong: oklch(22% 0.03 325);
-  --ink: oklch(22% 0.03 325);
-  --text: oklch(22% 0.03 325);
-  --text-muted: oklch(45% 0.03 325);
-  --text-subtle: oklch(60% 0.03 325);
-  --accent: oklch(55% 0.19 320);
-  --accent-hover: oklch(49% 0.2 320);
-  --accent-fg: oklch(99% 0.01 320);
-  --accent-subtle: oklch(93% 0.06 320);
-  --accent-glow: oklch(55% 0.19 320 / 0.35);
-  --accent-2: oklch(90% 0.12 70);
-  --accent-2-fg: oklch(22% 0.03 325);
-  --accent-3: oklch(62% 0.16 260);
-  --ring: oklch(55% 0.19 320);
-  --footer-bg: oklch(90% 0.12 70);
-  --footer-fg: oklch(22% 0.03 325);
-  --footer-muted: oklch(38% 0.04 325);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-palette='plum']:not([data-theme='light']) {
-    --bg: oklch(16% 0.02 320);
-    --bg-elevated: oklch(19% 0.022 320);
-    --surface: oklch(21% 0.025 320);
-    --surface-raised: oklch(25% 0.03 320);
-    --surface-sunken: oklch(13% 0.018 320);
-    --border: oklch(32% 0.035 320);
-    --border-strong: oklch(52% 0.05 320);
-    --ink: oklch(6% 0.01 320);
-    --text: oklch(96% 0.015 320);
-    --text-muted: oklch(74% 0.025 320);
-    --text-subtle: oklch(58% 0.03 320);
-    --accent: oklch(76% 0.17 322);
-    --accent-hover: oklch(83% 0.16 322);
-    --accent-fg: oklch(16% 0.03 320);
-    --accent-subtle: oklch(30% 0.08 322);
-    --accent-glow: oklch(76% 0.17 322 / 0.45);
-    --accent-2: oklch(88% 0.13 70);
-    --accent-2-fg: oklch(16% 0.03 320);
-    --accent-3: oklch(72% 0.15 260);
-    --ring: oklch(76% 0.17 322);
-    --footer-bg: oklch(12% 0.018 320);
-    --footer-fg: oklch(88% 0.13 70);
-    --footer-muted: oklch(70% 0.03 320);
-  }
-}
-
-:root[data-theme='dark'][data-palette='plum'] {
-  --bg: oklch(16% 0.02 320);
-  --bg-elevated: oklch(19% 0.022 320);
-  --surface: oklch(21% 0.025 320);
-  --surface-raised: oklch(25% 0.03 320);
-  --surface-sunken: oklch(13% 0.018 320);
-  --border: oklch(32% 0.035 320);
-  --border-strong: oklch(52% 0.05 320);
-  --ink: oklch(6% 0.01 320);
-  --text: oklch(96% 0.015 320);
-  --text-muted: oklch(74% 0.025 320);
-  --text-subtle: oklch(58% 0.03 320);
-  --accent: oklch(76% 0.17 322);
-  --accent-hover: oklch(83% 0.16 322);
-  --accent-fg: oklch(16% 0.03 320);
-  --accent-subtle: oklch(30% 0.08 322);
-  --accent-glow: oklch(76% 0.17 322 / 0.45);
-  --accent-2: oklch(88% 0.13 70);
-  --accent-2-fg: oklch(16% 0.03 320);
-  --accent-3: oklch(72% 0.15 260);
-  --ring: oklch(76% 0.17 322);
-  --footer-bg: oklch(12% 0.018 320);
-  --footer-fg: oklch(88% 0.13 70);
-  --footer-muted: oklch(70% 0.03 320);
+  --page-art: radial-gradient(oklch(96% 0 0 / 0.1) 1.2px, transparent 1.4px);
 }
 
 @theme inline {
@@ -475,9 +482,9 @@
   --color-footer-fg: var(--footer-fg);
   --color-footer-muted: var(--footer-muted);
 
-  /* Chunky. Small radii read as corporate; these read as friendly. */
-  --radius-card: 1.5rem;
-  --radius-control: 0.875rem;
+  /* Radii come from the active style: round for Glass, tight for Minimal, square for Geometric. */
+  --radius-card: var(--r-card);
+  --radius-control: var(--r-control);
   --radius-pill: 999px;
 
   --shadow-card: var(--shadow-md);
@@ -489,15 +496,18 @@
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, monospace;
 
   /*
-   * Display face. Archivo Black ships a single cut at weight 400 that is
-   * already ultra-heavy, which is why every use of it below also pins
-   * font-weight — asking for 800 would make the browser synthesise a fake bold
-   * on top of an already-black face, and smear the counters shut.
+   * Display face, chosen per style (see the style blocks above). The stack
+   * behind each is the ordinary sans, so if a webfont never arrives the
+   * headings fall back to a readable sans rather than a serif.
    *
-   * The system stack behind it is the ordinary sans, not a serif: if the
-   * webfont never arrives the headings should look unstyled, not wrong.
+   * Weight and tracking are tokens too, because the right values are a
+   * property of the typeface: Unbounded is wide and wants a lighter touch on
+   * tracking than Inter Tight does.
    */
-  --font-display: 'Archivo Black', var(--font-sans);
+  --font-display: var(--f-display);
+  --font-weight-display: var(--display-weight);
+  --tracking-display: var(--display-tracking);
+  --tracking-display-xl: var(--display-tracking-xl);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   /* Deliberately overshoots. The bounce is the personality. */
@@ -523,8 +533,15 @@
 
   body {
     background-color: var(--bg);
+    background-image: var(--page-art);
+    background-size: var(--page-art-size);
+    background-attachment: fixed;
     color: var(--text);
     font-family: var(--font-sans);
+    /* Body copy wants air. Dense UI leading reads as cramped at reading length. */
+    line-height: 1.65;
+    font-size: 1.0625rem;
+    font-feature-settings: 'cv11', 'ss03';
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     scrollbar-gutter: stable;
@@ -547,10 +564,18 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
+  /*
+   * Headings take the display face and the style's own weight and tracking, so
+   * a page gets the right typography without every heading naming a font.
+   * Tailwind utilities sit in a later layer and still override these.
+   */
   h1,
   h2,
   h3 {
-    letter-spacing: -0.03em;
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-display);
+    letter-spacing: var(--tracking-display);
+    line-height: 1.1;
     text-wrap: balance;
   }
 
@@ -658,19 +683,19 @@
    */
   .display {
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: var(--font-weight-display);
     /* Shorthand first for older Safari, then the longhand that says only this. */
     font-synthesis: none;
     font-synthesis-weight: none;
-    letter-spacing: -0.02em;
+    letter-spacing: var(--tracking-display);
   }
 
   /*
-   * Optical sizing, by hand. Type wants tighter tracking the larger it is set,
-   * and Archivo Black has no optical size axis to do this automatically.
+   * Optical sizing, by hand. Type wants tighter tracking the larger it is set.
+   * None of the display faces has an optical size axis to do this itself.
    */
   .display-xl {
-    letter-spacing: -0.035em;
+    letter-spacing: var(--tracking-display-xl);
   }
 
   /* --- Surfaces --------------------------------------------------------- */
@@ -692,21 +717,7 @@
     margin-right: calc(50% - 50vw);
   }
 
-  .aurora {
-    position: absolute;
-    inset: -30% -10% auto -10%;
-    height: 60vh;
-    z-index: -1;
-    pointer-events: none;
-    filter: blur(90px);
-    opacity: 0.55;
-    background:
-      radial-gradient(40% 60% at 18% 40%, var(--accent-glow), transparent 70%),
-      radial-gradient(38% 55% at 78% 28%, oklch(from var(--accent-2) l c h / 0.55), transparent 70%);
-    animation: drift 20s var(--ease-smooth) infinite alternate;
-  }
-
-  .text-gradient {
+    .text-gradient {
     background: linear-gradient(100deg, var(--accent) 10%, var(--accent-2) 60%, var(--accent) 95%);
     background-size: 220% 100%;
     -webkit-background-clip: text;
@@ -822,343 +833,6 @@
     contain-intrinsic-size: auto 500px;
   }
 
-  /* --- The journey ------------------------------------------------------ */
-
-  /*
-   * The WebGL field. Fixed behind everything, inert to the pointer, and safe to
-   * remove at any moment — every stage is designed to look finished without it,
-   * because the capability gate means most mobile visitors never load it.
-   *
-   * z-index 0 against the grain overlay's 1 and the content's own stacking,
-   * so it sits under the page but over the background colour.
-   */
-  .scene-canvas {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  /*
-   * Stage content has to sit above the canvas. Without this the WebGL layer
-   * paints over the text rather than behind it.
-   */
-  [data-stage] {
-    position: relative;
-    z-index: 2;
-  }
-
-  /*
-   * The depth every visitor gets, WebGL or not — a soft coloured plane behind
-   * each stage, offset per stage so the page reads as travelling through
-   * layers rather than scrolling a flat column.
-   */
-  [data-stage]::before {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    inset: 10% -20% 10% -20%;
-    pointer-events: none;
-    opacity: 0.4;
-    filter: blur(80px);
-    background: radial-gradient(
-      45% 55% at var(--plane-x, 50%) 50%,
-      oklch(from var(--accent) l c h / 0.22),
-      transparent 70%
-    );
-  }
-
-  /* Alternating sides, so consecutive stages do not stack the same glow. */
-  [data-stage='1']::before,
-  [data-stage='3']::before {
-    --plane-x: 82%;
-    background: radial-gradient(
-      45% 55% at var(--plane-x, 50%) 50%,
-      oklch(from var(--accent-2) l c h / 0.24),
-      transparent 70%
-    );
-  }
-
-  [data-stage='2']::before {
-    --plane-x: 20%;
-  }
-
-  [data-stage='4']::before {
-    --plane-x: 60%;
-    background: radial-gradient(
-      50% 60% at var(--plane-x, 50%) 50%,
-      oklch(from var(--accent-3) l c h / 0.2),
-      transparent 70%
-    );
-  }
-
-  /*
-   * The progress rail, sitting above the canvas and below the header.
-   *
-   * A solid bordered pill rather than a translucent blur. The rail crosses a
-   * full-bleed yellow marquee on the way down, and a semi-transparent panel
-   * over that band reads as a smudge rather than as a control. This is the same
-   * border-and-offset treatment the cards use, so it looks like part of the
-   * site instead of an overlay on top of it.
-   */
-  .stage-hud {
-    padding: 0.8rem 0.6rem;
-    border: 2px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-    /* Labels appear on hover, so the pill changes width — ease it. */
-    transition: width 0.3s var(--ease-out-expo);
-  }
-
-  /* --- The fighters ----------------------------------------------------- */
-
-  /*
-   * The run cycle. Limb groups rotate about their joints; `view-box` puts
-   * transform-origin in viewBox units so the joint coordinates in
-   * CharacterSprite are the ones that apply.
-   *
-   * Animation is gated on an ancestor's data-pose, which is written directly to
-   * the DOM by the frame loops. That is what keeps a sixty-times-a-second
-   * pose change from becoming a sixty-times-a-second React render.
-   */
-  .limb {
-    transform-box: view-box;
-  }
-
-  [data-pose='run'] .limb-arm-front,
-  [data-pose='run'] .limb-leg-back {
-    animation: limb-swing 0.42s linear infinite;
-  }
-
-  [data-pose='run'] .limb-arm-back,
-  [data-pose='run'] .limb-leg-front {
-    animation: limb-swing 0.42s linear infinite;
-    /* Half a cycle out of phase — opposite arm, opposite leg. */
-    animation-delay: -0.21s;
-  }
-
-  /* Idle is a slow breath, not stillness. A frozen figure reads as a bug. */
-  [data-pose='idle'] .limb-arm-front,
-  [data-pose='idle'] .limb-arm-back {
-    animation: limb-breathe 2.8s var(--ease-smooth) infinite alternate;
-  }
-
-  /* The replacement cursor ------------------------------------------------ */
-
-  /*
-   * The native cursor is hidden only while the fighter layer is mounted, and
-   * only outside text entry — a caret is doing a job no sprite can do, and
-   * taking it away makes a form genuinely harder to fill in.
-   */
-  :root[data-fighter-cursor] body,
-  :root[data-fighter-cursor] a,
-  :root[data-fighter-cursor] button,
-  :root[data-fighter-cursor] label,
-  :root[data-fighter-cursor] summary {
-    cursor: none;
-  }
-
-  :root[data-fighter-cursor] input,
-  :root[data-fighter-cursor] textarea,
-  :root[data-fighter-cursor] select,
-  :root[data-fighter-cursor] [contenteditable] {
-    cursor: auto;
-  }
-
-  .fighter-cursor,
-  .fighter-dot {
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 60;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s var(--ease-smooth);
-    will-change: transform;
-  }
-
-  .fighter-cursor[data-visible='true'],
-  :root[data-fighter-cursor] .fighter-dot {
-    opacity: 1;
-  }
-
-  /* The true pointer position. Small, high contrast, always exact. */
-  .fighter-dot {
-    width: 7px;
-    height: 7px;
-    margin: -3.5px 0 0 -3.5px;
-    border: 2px solid var(--bg);
-    border-radius: 999px;
-    background: var(--accent);
-    z-index: 61;
-  }
-
-  .fighter-cursor-sprite {
-    position: relative;
-    /* Offset up and left of the pointer so the dot is never hidden by a foot. */
-    margin: -54px 0 0 -14px;
-  }
-
-  .fighter-cursor-svg {
-    width: 52px;
-    height: auto;
-    display: block;
-    filter: drop-shadow(2px 3px 0 oklch(0% 0 0 / 0.25));
-  }
-
-  /* The flare on a click. Anime does not do subtle impacts. */
-  .fighter-impact {
-    position: absolute;
-    left: 50%;
-    top: 55%;
-    width: 14px;
-    height: 14px;
-    margin: -7px 0 0 -7px;
-    border-radius: 999px;
-    background: var(--aura, var(--accent));
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  [data-impact] .fighter-impact {
-    animation: impact-burst 0.32s var(--ease-out-expo);
-  }
-
-  /* The background runner -------------------------------------------------- */
-
-  .fighter-runner {
-    position: fixed;
-    left: 0;
-    /*
-     * Low, so he runs along the foot of the page. Raised any further and a
-     * 400px figure crosses the middle of the content, where a body of text is
-     * trying to be read through him.
-     */
-    bottom: 2vh;
-    z-index: 1;
-    pointer-events: none;
-    /* Low enough to stay scenery. This is the dial if he ever competes with
-       the text — not the component. */
-    opacity: 0.13;
-    will-change: transform;
-  }
-
-  .fighter-runner[data-facing='-1'] .fighter-runner-svg {
-    transform: scaleX(-1);
-  }
-
-  .fighter-runner-svg {
-    width: clamp(120px, 15vw, 240px);
-    height: auto;
-    display: block;
-  }
-
-  /* Speed lines behind him, drawn as repeating gradient stripes. */
-  .fighter-runner-lines {
-    position: absolute;
-    right: 100%;
-    top: 34%;
-    width: clamp(120px, 16vw, 260px);
-    height: 42%;
-    margin-right: -8px;
-    opacity: 0;
-    background: repeating-linear-gradient(
-      to right,
-      var(--aura, var(--accent)) 0 3px,
-      transparent 3px 16px
-    );
-    mask-image: linear-gradient(to right, transparent, black 70%);
-  }
-
-  .fighter-runner[data-facing='-1'] .fighter-runner-lines {
-    right: auto;
-    left: 100%;
-    margin: 0 0 0 -8px;
-    mask-image: linear-gradient(to left, transparent, black 70%);
-  }
-
-  .fighter-runner[data-pose='run'] .fighter-runner-lines {
-    opacity: 0.85;
-    animation: speed-lines 0.3s linear infinite;
-  }
-
-  /* The picker ------------------------------------------------------------- */
-
-  .fighter-option {
-    box-shadow: var(--shadow-sm);
-  }
-
-  .fighter-option:hover {
-    transform: translate(-1px, -3px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .fighter-option[data-selected='true'] {
-    transform: translate(-1px, -3px);
-    box-shadow: var(--shadow-md);
-  }
-
-  /* The ring has to be drawn here: the real radio is visually hidden. */
-  .fighter-option:has(:focus-visible) {
-    outline: 3px solid var(--ring);
-    outline-offset: 3px;
-  }
-
-  .fighter-option-svg {
-    width: 40px;
-    height: auto;
-    display: block;
-  }
-
-  /* The selected fighter idles in the picker; the rest hold still. */
-  .fighter-option[data-selected='true'] .fighter-option-svg .limb-arm-front,
-  .fighter-option[data-selected='true'] .fighter-option-svg .limb-arm-back {
-    animation: limb-breathe 2.4s var(--ease-smooth) infinite alternate;
-  }
-
-  /* --- Manga furniture ---------------------------------------------------- */
-
-  /*
-   * Halftone. One repeating radial gradient rather than an image, so it costs
-   * no request and scales to any size — the dot screen a manga page is printed
-   * with, at about a tenth of the contrast.
-   */
-  .halftone {
-    position: relative;
-  }
-
-  .halftone::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.12;
-    background-image: radial-gradient(var(--ink) 1.1px, transparent 1.2px);
-    background-size: 9px 9px;
-    mask-image: radial-gradient(70% 60% at 50% 50%, black, transparent);
-  }
-
-  /* The episode marker on each stage. */
-  .episode-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.3rem 0.75rem 0.3rem 0.5rem;
-    border: 2px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-
   /* --- Route transitions ------------------------------------------------ */
 
   /*
@@ -1168,26 +842,6 @@
    */
   .site-header {
     view-transition-name: site-header;
-  }
-
-  /* --- The scroll cue --------------------------------------------------- */
-
-  .scroll-cue-track {
-    display: inline-flex;
-    justify-content: center;
-    width: 1.4rem;
-    height: 2.2rem;
-    padding-top: 0.35rem;
-    border: 2px solid var(--border-strong);
-    border-radius: var(--radius-pill);
-  }
-
-  .scroll-cue-dot {
-    width: 0.3rem;
-    height: 0.3rem;
-    border-radius: 999px;
-    background: var(--accent);
-    animation: scroll-cue 1.9s var(--ease-smooth) infinite;
   }
 }
 
@@ -1206,15 +860,6 @@
   }
   to {
     background-position: 100% 50%;
-  }
-}
-
-@keyframes marquee {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-50%, 0, 0);
   }
 }
 
@@ -1251,95 +896,6 @@
 @keyframes spin-slow {
   to {
     transform: rotate(360deg);
-  }
-}
-
-/* Attention-seeking nudge, used sparingly on the primary call to action. */
-@keyframes wiggle {
-  0%,
-  88%,
-  100% {
-    transform: rotate(0deg);
-  }
-  91% {
-    transform: rotate(-2.5deg);
-  }
-  94% {
-    transform: rotate(2.5deg);
-  }
-  97% {
-    transform: rotate(-1.5deg);
-  }
-}
-
-/* The WebGL scene fades in once its first frames are on screen. */
-@keyframes scene-in {
-  to {
-    opacity: 1;
-  }
-}
-
-/*
- * One run cycle for every limb. Arms and legs share it and are offset by half a
- * period, which is the whole trick — four separate keyframe blocks would say
- * the same thing four times and drift apart the first time one is edited.
- */
-@keyframes limb-swing {
-  0% {
-    transform: rotate(38deg);
-  }
-  50% {
-    transform: rotate(-38deg);
-  }
-  100% {
-    transform: rotate(38deg);
-  }
-}
-
-@keyframes limb-breathe {
-  from {
-    transform: rotate(2deg);
-  }
-  to {
-    transform: rotate(-4deg);
-  }
-}
-
-/* The click flare: a ring that expands and thins out. */
-@keyframes impact-burst {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.4);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(5);
-  }
-}
-
-/* Speed lines streaming backwards off the runner. */
-@keyframes speed-lines {
-  to {
-    background-position-x: -16px;
-  }
-}
-
-/* The dot travelling down the scroll cue. */
-@keyframes scroll-cue {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  25% {
-    opacity: 1;
-  }
-  75% {
-    transform: translateY(0.85rem);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0.85rem);
-    opacity: 0;
   }
 }
 
@@ -1390,29 +946,7 @@
     scroll-behavior: auto;
   }
 
-  /*
-   * The scene never loads under reduced motion (useSceneCapability refuses it),
-   * so there is nothing to hide here. The rail is hidden instead: it is a
-   * moving indicator, and its destinations are all in the header already.
-   */
-  .stage-hud,
-  .scroll-cue {
-    display: none;
-  }
-
-  /*
-   * The fighter layer never mounts under reduced motion — useFighterLayer
-   * refuses it — so these are a backstop rather than the mechanism. The picker
-   * stays: choosing a character is a preference, not an animation, and the
-   * sprites simply hold still.
-   */
-  .fighter-cursor,
-  .fighter-dot,
-  .fighter-runner {
-    display: none;
-  }
-
-  /*
+    /*
    * A page swap becomes instant rather than fast. The universal rule below
    * cannot reach these: ::view-transition-* pseudo-elements are not descendants
    * of any element, so `*` never matches them.
@@ -1440,4 +974,74 @@
   .js .split-word {
     transform: none !important;
   }
+}
+
+/*
+ * --- Style treatments -----------------------------------------------------
+ *
+ * The token blocks above set colour, radius, shadow and type. These rules set
+ * what the tokens cannot: how surfaces behave, how heavy the rules are, and how
+ * much things move. They are unlayered on purpose, so they win over the
+ * utility classes the components already use (border-2, push, lift) without
+ * the components having to know which style is active.
+ */
+
+/* Glass: panels are frosted, so whatever sits behind them shows through softly. */
+:root[data-style='glass'] .bg-surface,
+:root[data-style='glass'] .bg-surface-raised,
+:root[data-style='glass'] .bg-surface-sunken,
+:root[data-style='glass'] .style-panel,
+:root[data-style='glass'] .style-trigger,
+:root[data-style='glass'] .site-header {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+}
+
+/* Glass and Minimal: hairline rules, not the 2px outlines of the default. */
+:root[data-style='glass'] .border-2,
+:root[data-style='minimal'] .border-2 {
+  border-width: 1px;
+}
+
+:root[data-style='glass'] .border-b-2,
+:root[data-style='minimal'] .border-b-2 {
+  border-bottom-width: 1px;
+}
+
+/* Minimal: nothing jumps. Hover changes colour, not position. */
+:root[data-style='minimal'] .push:hover,
+:root[data-style='minimal'] .push:active,
+:root[data-style='minimal'] .lift:hover,
+:root[data-style='minimal'] .squish:hover,
+:root[data-style='minimal'] .squish:active,
+:root[data-style='minimal'] .sticker:hover {
+  transform: none;
+}
+
+:root[data-style='minimal'] .lift:hover {
+  transform: translate3d(0, -2px, 0);
+}
+
+:root[data-style='minimal'] .sheen::after {
+  display: none;
+}
+
+/* Geometric: the hard offset shadow is the signature, so keep the push. */
+:root[data-style='geometric'] .sticker {
+  --tilt: -2deg;
+}
+
+:root[data-style] h1 {
+  font-size: clamp(2.5rem, 5.2vw + 1rem, 4.75rem);
+}
+
+/*
+ * The word mask in SplitText clips to the line box. The tighter heading leading
+ * above is shorter than the display faces' glyphs, so the bottom of a word was
+ * being cut off. Padding the mask grows the clipping area without moving the
+ * layout, because the negative margin cancels it out.
+ */
+.split-reveal .overflow-hidden {
+  padding-block: 0.3em;
+  margin-block: -0.3em;
 }
